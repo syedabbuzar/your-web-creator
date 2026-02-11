@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import scholarLogo from "@/assets/scholar-logo.jpg";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -42,9 +43,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo and Title */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl md:text-3xl transition-transform duration-300 group-hover:scale-110">
-              SC
-            </div>
+            <img src={scholarLogo} alt="Scholar Educational Campus Logo" className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover transition-transform duration-300 group-hover:scale-110" />
             <div className="hidden sm:block">
               <h1 className="text-lg md:text-xl font-bold text-foreground tracking-wide">
                 SCHOLAR EDUCATIONAL

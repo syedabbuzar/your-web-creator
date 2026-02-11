@@ -3,53 +3,43 @@ import EventCard from "@/components/EventCard";
 import { Calendar, Filter } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import event1Img from "@/assets/Event1.jpg";
+import event2Img from "@/assets/Event2.jpg";
+import event3Img from "@/assets/Event3.jpg";
+import event4Img from "@/assets/Event4.jpg";
 
 const allEvents = [
   {
     title: "Educational Expo & Conference 2025",
     description: "Join us for an exciting educational expo featuring innovative teaching methods, modern technologies, and interactive sessions with education experts from across the country.",
     date: "March 15, 2025",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=600&fit=crop",
+    image: event2Img,
     category: "Conference",
   },
   {
     title: "Glimpse of Urooj 2025",
     description: "Annual cultural festival celebrating talent, creativity, and the spirit of our students. Music, dance, drama, and art exhibitions await!",
     date: "February 28, 2025",
-    image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=600&fit=crop",
+    image: event1Img,
     category: "Cultural",
   },
   {
     title: "POCSO Act 2012 Awareness Workshop",
     description: "Important awareness session about child protection laws and safety measures. A must-attend for parents, teachers, and students.",
     date: "February 20, 2025",
-    image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&h=600&fit=crop",
+    image: event4Img,
     category: "Workshop",
   },
   {
-    title: "Annual Sports Day 2025",
-    description: "Celebrating athleticism and sportsmanship. Join us for an exciting day of competitions, team sports, and individual events.",
+    title: "MESTA Award Ceremony",
+    description: "Celebrating excellence in education. Scholar Campus recognized at the prestigious MESTA awards ceremony.",
     date: "March 5, 2025",
-    image: "https://images.unsplash.com/photo-1461896836934- voices-of-2022?w=800&h=600&fit=crop",
-    category: "Sports",
-  },
-  {
-    title: "Science Exhibition",
-    description: "Students showcase their innovative science projects and experiments. Witness the future scientists in action!",
-    date: "March 22, 2025",
-    image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&h=600&fit=crop",
+    image: event3Img,
     category: "Academic",
-  },
-  {
-    title: "Parent-Teacher Meeting",
-    description: "An opportunity for parents to interact with teachers and discuss their child's academic progress and development.",
-    date: "February 15, 2025",
-    image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&h=600&fit=crop",
-    category: "Meeting",
   },
 ];
 
-const categories = ["All", "Conference", "Cultural", "Workshop", "Sports", "Academic", "Meeting"];
+const categories = ["All", "Conference", "Cultural", "Workshop", "Academic"];
 
 const Events = () => {
   const [activeCategory, setActiveCategory] = useState("All");
