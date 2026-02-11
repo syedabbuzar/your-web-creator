@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 36 33% 94%; /* Cream/Beige #f5f0e8 */
+    --background: 30 30% 90%; /* Warm parchment like demo */
     --foreground: 0 100% 27%; /* Dark Maroon #8B0000 */
 
     --card: 36 33% 96%;
