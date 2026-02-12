@@ -111,6 +111,7 @@ const Index = () => {
             {events.map((event, index) => (
               <EventCard
                 key={event.title}
+                id={event.id}
                 {...event}
                 className="animate-fade-in-up"
                 style={{ animationDelay: `${0.2 + index * 0.1}s` }}
