@@ -15,11 +15,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "A") {
-        setIsAdmin((prev) => {
-          const next = !prev;
-          localStorage.setItem("scholar_admin", String(next));
-          return next;
-        });
+        setIsAdmin((prev) => !prev);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
