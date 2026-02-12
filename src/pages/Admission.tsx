@@ -110,6 +110,8 @@ const Admission = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
+    const currentReceipt = receipt;
+
     const docImages = receipt.attachments
       .map((att) => {
         if (isImageType(att.type)) {
