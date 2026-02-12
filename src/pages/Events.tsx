@@ -50,7 +50,7 @@ const Events = () => {
       saveEvents(events.map((e) => (e.id === editingEvent.id ? { ...e, ...form } : e)));
       toast.success("Event updated!");
     } else {
-      saveEvents([...events, { id: Date.now().toString(), ...form, image: form.image || event1Img }]);
+      saveEvents([...events, { id: Date.now().toString(), ...form, image: form.image || defaultEvents[0].image }]);
       toast.success("Event added!");
     }
     setDialogOpen(false);
