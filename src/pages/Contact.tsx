@@ -116,7 +116,7 @@ const Contact = () => {
           <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground text-center mb-4 sm:mb-6 md:mb-8 animate-fade-in">Find Us on Map</h2>
           <div className="aspect-[16/9] max-w-4xl mx-auto bg-card rounded-lg overflow-hidden shadow-lg animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3671.9012!2d72.5714!3d23.0225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDAxJzIxLjAiTiA3MsKwMzQnMTcuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.176546425336!2d77.33875547714214!3d19.14374780364763!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bd1d7c5e9ab3f8b%3A0x1646397e70814832!2sScholar%20International%20School%20HYD.Road%20Wajegaon%20Nanded!5e0!3m2!1sen!2sin!4v1770882964893!5m2!1sen!2sin"
               width="100%"
               height="100%"
               style={{ border: 0 }}

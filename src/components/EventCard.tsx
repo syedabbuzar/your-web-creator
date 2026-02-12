@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 interface EventCardProps {
+  id?: string;
   title: string;
   description: string;
   date: string;
@@ -9,8 +11,8 @@ interface EventCardProps {
   style?: React.CSSProperties;
 }
 
-const EventCard = ({ title, description, date, image, className, style }: EventCardProps) => {
-  return (
+const EventCard = ({ id, title, description, date, image, className, style }: EventCardProps) => {
+  const content = (
     <div
       className={cn(
         "card-hover bg-card rounded-lg overflow-hidden shadow-md",
@@ -35,12 +37,17 @@ const EventCard = ({ title, description, date, image, className, style }: EventC
         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
           {description}
         </p>
-        <button className="mt-3 sm:mt-4 text-xs sm:text-sm font-semibold text-primary hover:text-accent transition-colors duration-200 nav-link">
+        <span className="mt-3 sm:mt-4 text-xs sm:text-sm font-semibold text-primary hover:text-accent transition-colors duration-200 nav-link inline-block">
           Read More
-        </button>
+        </span>
       </div>
     </div>
   );
+
+  if (id) {
+    return <Link to={`/event/${id}`}>{content}</Link>;
+  }
+  return content;
 };
 
 export default EventCard;

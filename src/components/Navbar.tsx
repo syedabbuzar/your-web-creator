@@ -51,11 +51,11 @@ const Navbar = () => {
               alt="Scholar Educational Campus Logo"
               className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
-            <div className="hidden xs:block sm:block">
-              <h1 className="text-xs sm:text-sm md:text-lg lg:text-xl font-bold text-foreground tracking-wide leading-tight">
+            <div>
+              <h1 className="text-[10px] xs:text-xs sm:text-sm md:text-lg lg:text-xl font-bold text-foreground tracking-wide leading-tight">
                 SCHOLAR EDUCATIONAL
               </h1>
-              <p className="text-[10px] sm:text-xs md:text-sm lg:text-base text-foreground/80 tracking-widest">
+              <p className="text-[8px] xs:text-[10px] sm:text-xs md:text-sm lg:text-base text-foreground/80 tracking-widest">
                 CAMPUS
               </p>
             </div>
