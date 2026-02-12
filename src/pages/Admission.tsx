@@ -110,7 +110,9 @@ const Admission = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
 
-    const docImages = receipt.attachments
+    const currentReceipt = receipt;
+
+    const docImages = currentReceipt.attachments
       .map((att) => {
         if (isImageType(att.type)) {
           return `
@@ -133,7 +135,7 @@ const Admission = () => {
       .join("");
 
     printWindow.document.write(`
-      <html><head><title>Admission Receipt - ${receipt.receiptNo}</title>
+      <html><head><title>Admission Receipt - ${currentReceipt.receiptNo}</title>
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Georgia, serif; padding: 20px; color: #333; background: #fff; }
@@ -167,14 +169,14 @@ const Admission = () => {
           </p>
         </div>
 
-        <div class="row"><span class="label">Receipt No:</span><span>${receipt.receiptNo}</span></div>
-        <div class="row"><span class="label">Date:</span><span>${receipt.date}</span></div>
-        <div class="row"><span class="label">Student Name:</span><span>${receipt.studentName}</span></div>
-        <div class="row"><span class="label">Class:</span><span>${receipt.class}</span></div>
-        <div class="row"><span class="label">Address:</span><span>${receipt.address}</span></div>
-        <div class="row"><span class="label">Percentage:</span><span>${receipt.percentage}%</span></div>
+        <div class="row"><span class="label">Receipt No:</span><span>${currentReceipt.receiptNo}</span></div>
+        <div class="row"><span class="label">Date:</span><span>${currentReceipt.date}</span></div>
+        <div class="row"><span class="label">Student Name:</span><span>${currentReceipt.studentName}</span></div>
+        <div class="row"><span class="label">Class:</span><span>${currentReceipt.class}</span></div>
+        <div class="row"><span class="label">Address:</span><span>${currentReceipt.address}</span></div>
+        <div class="row"><span class="label">Percentage:</span><span>${currentReceipt.percentage}%</span></div>
 
-        ${receipt.attachments.length > 0 ? `
+        ${currentReceipt.attachments.length > 0 ? `
           <div class="docs-section">
             <p class="docs-title">Submitted Documents</p>
             ${docImages}
@@ -187,12 +189,15 @@ const Admission = () => {
         </div>
       </div>
       <script>
-        document.title = "Admission_Receipt_${receipt.receiptNo}";
+        document.title = "Admission_Receipt_${currentReceipt.receiptNo}";
         setTimeout(() => window.print(), 500);
       <\/script>
       </body></html>
     `);
     printWindow.document.close();
+
+    // Reset form after PDF download
+    handleCancel();
   };
 
   if (receipt) {
