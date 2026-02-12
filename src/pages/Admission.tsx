@@ -82,12 +82,12 @@ const Admission = () => {
     setReceipt(null);
   };
 
-  const handlePrint = () => {
+  const handleDownloadPDF = () => {
     if (receiptRef.current) {
       const printWindow = window.open("", "_blank");
       if (printWindow) {
         printWindow.document.write(`
-          <html><head><title>Admission Receipt</title>
+          <html><head><title>Admission Receipt - ${receipt?.receiptNo}</title>
           <style>
             body { font-family: Georgia, serif; padding: 20px; color: #333; }
             .receipt { border: 2px solid #8B0000; padding: 20px; max-width: 600px; margin: auto; }
@@ -97,9 +97,13 @@ const Admission = () => {
             .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: 13px; }
             .label { font-weight: bold; color: #8B0000; }
             .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #888; }
+            @media print { body { padding: 0; } }
           </style></head><body>
           ${receiptRef.current.innerHTML}
-          <script>window.print();window.close();<\/script>
+          <script>
+            document.title = "Admission_Receipt_${receipt?.receiptNo}";
+            window.print();
+          <\/script>
           </body></html>
         `);
         printWindow.document.close();
