@@ -1,5 +1,5 @@
 import Layout from "@/components/Layout";
-import { GraduationCap, Printer } from "lucide-react";
+import { GraduationCap, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
