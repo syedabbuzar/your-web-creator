@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAdmin } from "@/contexts/AdminContext";
 import scholarLogo from "@/assets/scholar-logo.jpg";
 
 const navLinks = [
@@ -15,9 +16,9 @@ const navLinks = [
 ];
 
 const Navbar = () => {
+  const { isAdmin, toggleAdmin } = useAdmin();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,6 +74,11 @@ const Navbar = () => {
 
           {/* Contact Button & Mobile Menu */}
           <div className="flex items-center gap-4">
+            {isAdmin && (
+              <Button onClick={toggleAdmin} variant="outline" size="sm" className="hidden md:flex items-center gap-1 border-destructive text-destructive hover:bg-destructive/10 rounded-full text-xs">
+                <ShieldOff className="w-3.5 h-3.5" /> Exit Admin
+              </Button>
+            )}
             <Link to="/contact" className="hidden md:block">
               <Button className="btn-hover bg-primary text-primary-foreground font-semibold px-6 py-2 rounded-full">
                 Contact Us
@@ -108,7 +114,14 @@ const Navbar = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {link.name}
-              </Link>
+            </Link>
+            {isAdmin && (
+              <div className="px-6 py-3">
+                <Button onClick={toggleAdmin} variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive/10 rounded-full">
+                  <ShieldOff className="w-4 h-4 mr-1" /> Exit Admin Mode
+                </Button>
+              </div>
+            )}
             ))}
             <Link to="/contact" className="px-6 py-3">
               <Button className="w-full bg-primary text-primary-foreground font-semibold rounded-full">
