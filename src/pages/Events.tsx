@@ -109,7 +109,11 @@ const Events = () => {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {filteredEvents.map((event, index) => (
-              <div key={event.id} className="relative group">
+              <div
+                key={event.id}
+                className="relative group animate-fade-in-up opacity-0"
+                style={{ animationDelay: `${0.15 + index * 0.15}s`, animationFillMode: "forwards" }}
+              >
                 {isAdmin && (
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <button onClick={() => openEdit(event)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
@@ -126,8 +130,7 @@ const Events = () => {
                   description={event.description}
                   date={event.date}
                   image={event.image}
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="hover-scale"
                 />
               </div>
             ))}

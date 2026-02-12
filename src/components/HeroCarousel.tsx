@@ -20,16 +20,16 @@ const HeroCarousel = () => {
     setCurrent((prev) => (prev - 1 + total) % total);
   }, [total]);
 
-  // Auto-slide
+  // Auto-slide (slower)
   useEffect(() => {
-    const timer = setInterval(next, 4000);
+    const timer = setInterval(next, 7000);
     return () => clearInterval(timer);
   }, [next]);
 
   if (total === 0) return null;
 
   return (
-    <section className="relative w-full h-48 sm:h-56 md:h-72 lg:h-80 xl:h-96 overflow-hidden">
+    <section className="relative w-full h-[200px] sm:h-[280px] md:h-[380px] lg:h-[450px] xl:h-[520px] overflow-hidden">
       {/* Slides */}
       {events.map((event: any, index: number) => (
         <Link
@@ -42,7 +42,8 @@ const HeroCarousel = () => {
           <img
             src={event.image}
             alt={event.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-center"
+            loading="eager"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-4 sm:left-6 md:left-8 right-4 sm:right-6 md:right-8 z-20">
