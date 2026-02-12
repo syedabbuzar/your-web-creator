@@ -149,9 +149,9 @@ const Admission = () => {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6 justify-center">
-              <Button onClick={handlePrint} className="bg-primary text-primary-foreground px-6 sm:px-8 py-2.5 sm:py-3 rounded-full btn-hover text-sm">
-                <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                Print Receipt
+              <Button onClick={handleDownloadPDF} className="bg-primary text-primary-foreground px-6 sm:px-8 py-2.5 sm:py-3 rounded-full btn-hover text-sm">
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
+                Download PDF
               </Button>
               <Button onClick={handleCancel} variant="outline" className="border-primary text-primary px-6 sm:px-8 py-2.5 sm:py-3 rounded-full btn-hover text-sm">
                 New Admission
