@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AdminProvider } from "@/contexts/AdminContext";
 import Index from "./pages/Index";
 import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 import About from "./pages/About";
 import Campus from "./pages/Campus";
 import Exam from "./pages/Exam";
@@ -25,6 +26,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/event/:id" element={<EventDetail />} />
             <Route path="/about" element={<About />} />
             <Route path="/campus" element={<Campus />} />
             <Route path="/exam" element={<Exam />} />

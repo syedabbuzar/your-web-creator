@@ -10,26 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import event1Img from "@/assets/Event1.jpg";
-import event2Img from "@/assets/Event2.jpg";
-import event3Img from "@/assets/Event3.jpg";
-import event4Img from "@/assets/Event4.jpg";
-
-interface EventItem {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  image: string;
-  category: string;
-}
-
-const defaultEvents: EventItem[] = [
-  { id: "1", title: "Educational Expo & Conference 2025", description: "Join us for an exciting educational expo featuring innovative teaching methods, modern technologies, and interactive sessions with education experts from across the country.", date: "March 15, 2025", image: event2Img, category: "Conference" },
-  { id: "2", title: "Glimpse of Urooj 2025", description: "Annual cultural festival celebrating talent, creativity, and the spirit of our students. Music, dance, drama, and art exhibitions await!", date: "February 28, 2025", image: event1Img, category: "Cultural" },
-  { id: "3", title: "POCSO Act 2012 Awareness Workshop", description: "Important awareness session about child protection laws and safety measures. A must-attend for parents, teachers, and students.", date: "February 20, 2025", image: event4Img, category: "Workshop" },
-  { id: "4", title: "MESTA Award Ceremony", description: "Celebrating excellence in education. Scholar Campus recognized at the prestigious MESTA awards ceremony.", date: "March 5, 2025", image: event3Img, category: "Academic" },
-];
+import { defaultEvents, type EventItem } from "@/data/events";
 
 const categories = ["All", "Conference", "Cultural", "Workshop", "Academic"];
 
@@ -69,7 +50,7 @@ const Events = () => {
       saveEvents(events.map((e) => (e.id === editingEvent.id ? { ...e, ...form } : e)));
       toast.success("Event updated!");
     } else {
-      saveEvents([...events, { id: Date.now().toString(), ...form, image: form.image || event1Img }]);
+      saveEvents([...events, { id: Date.now().toString(), ...form, image: form.image || defaultEvents[0].image }]);
       toast.success("Event added!");
     }
     setDialogOpen(false);
@@ -140,6 +121,7 @@ const Events = () => {
                   </div>
                 )}
                 <EventCard
+                  id={event.id}
                   title={event.title}
                   description={event.description}
                   date={event.date}
