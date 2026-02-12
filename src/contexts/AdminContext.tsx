@@ -10,7 +10,7 @@ const AdminContext = createContext<AdminContextType>({ isAdmin: false, toggleAdm
 export const useAdmin = () => useContext(AdminContext);
 
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
-  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("scholar_admin") === "true");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
