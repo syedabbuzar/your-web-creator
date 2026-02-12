@@ -1,7 +1,7 @@
 import Layout from "@/components/Layout";
 import EventCard from "@/components/EventCard";
 import { Calendar, Filter, Plus, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Button } from "@/components/ui/button";
@@ -10,55 +10,69 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { defaultEvents, type EventItem } from "@/data/events";
+import { supabase } from "@/integrations/supabase/client";
 
 const categories = ["All", "Conference", "Cultural", "Workshop", "Academic"];
 
 const Events = () => {
   const { isAdmin } = useAdmin();
   const [activeCategory, setActiveCategory] = useState("All");
-  const [events, setEvents] = useState<EventItem[]>(() => {
-    const saved = localStorage.getItem("scholar_events");
-    return saved ? JSON.parse(saved) : defaultEvents;
-  });
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", date: "", image: "", category: "Conference" });
+  const [editingEvent, setEditingEvent] = useState<any | null>(null);
+  const [form, setForm] = useState({ title: "", description: "", full_description: "", date: "", image: "", category: "Conference" });
 
-  const saveEvents = (updated: EventItem[]) => {
-    setEvents(updated);
-    localStorage.setItem("scholar_events", JSON.stringify(updated));
+  const fetchEvents = async () => {
+    const { data, error } = await supabase.from("events").select("*").order("sort_order");
+    if (error) { toast.error("Failed to load events"); return; }
+    setEvents(data || []);
+    setLoading(false);
   };
+
+  useEffect(() => { fetchEvents(); }, []);
 
   const filteredEvents = activeCategory === "All" ? events : events.filter((e) => e.category === activeCategory);
 
   const openAdd = () => {
     setEditingEvent(null);
-    setForm({ title: "", description: "", date: "", image: "", category: "Conference" });
+    setForm({ title: "", description: "", full_description: "", date: "", image: "", category: "Conference" });
     setDialogOpen(true);
   };
 
-  const openEdit = (event: EventItem) => {
+  const openEdit = (event: any) => {
     setEditingEvent(event);
-    setForm({ title: event.title, description: event.description, date: event.date, image: event.image, category: event.category });
+    setForm({ title: event.title, description: event.description, full_description: event.full_description || "", date: event.date, image: event.image, category: event.category });
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title || !form.description || !form.date) return toast.error("Title, Description and Date are required");
     if (editingEvent) {
-      saveEvents(events.map((e) => (e.id === editingEvent.id ? { ...e, ...form } : e)));
+      const { error } = await supabase.from("events").update({
+        title: form.title, description: form.description, full_description: form.full_description || null,
+        date: form.date, image: form.image, category: form.category
+      }).eq("id", editingEvent.id);
+      if (error) return toast.error("Failed to update event");
       toast.success("Event updated!");
     } else {
-      saveEvents([...events, { id: Date.now().toString(), ...form, image: form.image || defaultEvents[0].image }]);
+      const { error } = await supabase.from("events").insert({
+        title: form.title, description: form.description, full_description: form.full_description || null,
+        date: form.date, image: form.image || "/Event1.jpg", category: form.category,
+        sort_order: events.length + 1
+      });
+      if (error) return toast.error("Failed to add event");
       toast.success("Event added!");
     }
     setDialogOpen(false);
+    fetchEvents();
   };
 
-  const handleDelete = (id: string) => {
-    saveEvents(events.filter((e) => e.id !== id));
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) return toast.error("Failed to delete event");
     toast.success("Event removed!");
+    fetchEvents();
   };
 
   return (
@@ -107,35 +121,39 @@ const Events = () => {
 
       <section className="py-8 sm:py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            {filteredEvents.map((event, index) => (
-              <div
-                key={event.id}
-                className="relative group animate-fade-in-up opacity-0"
-                style={{ animationDelay: `${0.15 + index * 0.15}s`, animationFillMode: "forwards" }}
-              >
-                {isAdmin && (
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    <button onClick={() => openEdit(event)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
-                      <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-                    </button>
-                    <button onClick={() => handleDelete(event.id)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
-                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-destructive" />
-                    </button>
-                  </div>
-                )}
-                <EventCard
-                  id={event.id}
-                  title={event.title}
-                  description={event.description}
-                  date={event.date}
-                  image={event.image}
-                  className="hover-scale"
-                />
-              </div>
-            ))}
-          </div>
-          {filteredEvents.length === 0 && (
+          {loading ? (
+            <div className="text-center py-12"><p className="text-muted-foreground">Loading events...</p></div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+              {filteredEvents.map((event, index) => (
+                <div
+                  key={event.id}
+                  className="relative group animate-fade-in-up opacity-0"
+                  style={{ animationDelay: `${0.15 + index * 0.15}s`, animationFillMode: "forwards" }}
+                >
+                  {isAdmin && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <button onClick={() => openEdit(event)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
+                        <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
+                      </button>
+                      <button onClick={() => handleDelete(event.id)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-destructive" />
+                      </button>
+                    </div>
+                  )}
+                  <EventCard
+                    id={event.id}
+                    title={event.title}
+                    description={event.description}
+                    date={event.date}
+                    image={event.image}
+                    className="hover-scale"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          {!loading && filteredEvents.length === 0 && (
             <div className="text-center py-8 sm:py-12">
               <p className="text-sm sm:text-base md:text-lg text-muted-foreground">No events found in this category.</p>
             </div>
@@ -156,6 +174,10 @@ const Events = () => {
             <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-xs sm:text-sm">Description *</Label>
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Event description" className="text-sm" />
+            </div>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Full Description</Label>
+              <Textarea value={form.full_description} onChange={(e) => setForm({ ...form, full_description: e.target.value })} placeholder="Detailed description (optional)" className="text-sm" rows={4} />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-1.5 sm:space-y-2">

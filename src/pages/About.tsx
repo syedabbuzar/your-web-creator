@@ -1,12 +1,13 @@
 import Layout from "@/components/Layout";
 import { Users, Target, Eye, Heart, Award, BookOpen, Plus, Pencil, Trash2 } from "lucide-react";
 import { useAdmin } from "@/contexts/AdminContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const values = [
   { icon: Target, title: "Truth", description: "We pursue knowledge with honesty and integrity in all our endeavors." },
@@ -15,34 +16,22 @@ const values = [
   { icon: Award, title: "Excellence", description: "We strive for the highest standards in education and character." },
 ];
 
-interface Leader {
-  id: string;
-  name: string;
-  role: string;
-  image: string;
-}
-
-const defaultLeaders: Leader[] = [
-  { id: "1", name: "Dr. Rajesh Kumar", role: "Principal", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop" },
-  { id: "2", name: "Mrs. Priya Sharma", role: "Vice Principal", image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop" },
-  { id: "3", name: "Mr. Amit Verma", role: "Academic Director", image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop" },
-  { id: "4", name: "Mrs. Sunita Patel", role: "Administrative Head", image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&h=300&fit=crop" },
-];
-
 const About = () => {
   const { isAdmin } = useAdmin();
-  const [leaders, setLeaders] = useState<Leader[]>(() => {
-    const saved = localStorage.getItem("scholar_leaders");
-    return saved ? JSON.parse(saved) : defaultLeaders;
-  });
+  const [leaders, setLeaders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingLeader, setEditingLeader] = useState<Leader | null>(null);
+  const [editingLeader, setEditingLeader] = useState<any | null>(null);
   const [form, setForm] = useState({ name: "", role: "", image: "" });
 
-  const saveLeaders = (updated: Leader[]) => {
-    setLeaders(updated);
-    localStorage.setItem("scholar_leaders", JSON.stringify(updated));
+  const fetchLeaders = async () => {
+    const { data, error } = await supabase.from("leaders").select("*").order("sort_order");
+    if (error) { toast.error("Failed to load leaders"); return; }
+    setLeaders(data || []);
+    setLoading(false);
   };
+
+  useEffect(() => { fetchLeaders(); }, []);
 
   const openAdd = () => {
     setEditingLeader(null);
@@ -50,27 +39,36 @@ const About = () => {
     setDialogOpen(true);
   };
 
-  const openEdit = (leader: Leader) => {
+  const openEdit = (leader: any) => {
     setEditingLeader(leader);
     setForm({ name: leader.name, role: leader.role, image: leader.image });
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.role) return toast.error("Name and Role are required");
     if (editingLeader) {
-      saveLeaders(leaders.map((l) => (l.id === editingLeader.id ? { ...l, ...form } : l)));
+      const { error } = await supabase.from("leaders").update(form).eq("id", editingLeader.id);
+      if (error) return toast.error("Failed to update");
       toast.success("Leader updated!");
     } else {
-      saveLeaders([...leaders, { id: Date.now().toString(), ...form, image: form.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop" }]);
+      const { error } = await supabase.from("leaders").insert({
+        ...form,
+        image: form.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop",
+        sort_order: leaders.length + 1
+      });
+      if (error) return toast.error("Failed to add");
       toast.success("Leader added!");
     }
     setDialogOpen(false);
+    fetchLeaders();
   };
 
-  const handleDelete = (id: string) => {
-    saveLeaders(leaders.filter((l) => l.id !== id));
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("leaders").delete().eq("id", id);
+    if (error) return toast.error("Failed to delete");
     toast.success("Leader removed!");
+    fetchLeaders();
   };
 
   return (

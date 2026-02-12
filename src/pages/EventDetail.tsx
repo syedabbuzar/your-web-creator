@@ -1,18 +1,35 @@
 import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
-import { defaultEvents } from "@/data/events";
+import { supabase } from "@/integrations/supabase/client";
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const events = (() => {
-    const saved = localStorage.getItem("scholar_events");
-    return saved ? JSON.parse(saved) : defaultEvents;
-  })();
+  useEffect(() => {
+    const fetchEvent = async () => {
+      const { data } = await supabase.from("events").select("*").eq("id", id).single();
+      setEvent(data);
+      setLoading(false);
+    };
+    fetchEvent();
+  }, [id]);
 
-  const event = events.find((e: any) => e.id === id);
+  if (loading) {
+    return (
+      <Layout>
+        <section className="py-16 sm:py-20 md:py-28">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
 
   if (!event) {
     return (
@@ -32,23 +49,17 @@ const EventDetail = () => {
     );
   }
 
-  const description = event.fullDescription || event.description;
+  const description = event.full_description || event.description;
 
   return (
     <Layout>
-      {/* Hero Image */}
       <section className="relative">
         <div className="w-full h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden">
-          <img
-            src={event.image}
-            alt={event.title}
-            className="w-full h-full object-cover"
-          />
+          <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         </div>
       </section>
 
-      {/* Content */}
       <section className="py-6 sm:py-8 md:py-12">
         <div className="container mx-auto px-4 max-w-3xl">
           <Link to="/events" className="inline-flex items-center text-sm text-primary hover:text-accent transition-colors mb-4 sm:mb-6">
@@ -73,7 +84,6 @@ const EventDetail = () => {
           <div className="prose prose-sm sm:prose-base max-w-none">
             {description.split("\n").map((paragraph: string, idx: number) => {
               if (!paragraph.trim()) return null;
-              // Handle bold text with **
               const parts = paragraph.split(/\*\*(.*?)\*\*/g);
               return (
                 <p key={idx} className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 leading-relaxed">

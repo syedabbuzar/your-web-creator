@@ -1,6 +1,6 @@
 import Layout from "@/components/Layout";
 import { Building, Book, Beaker, Music, Dumbbell, Monitor, Trees, Utensils, Plus, Pencil, Trash2, ImagePlus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Button } from "@/components/ui/button";
@@ -9,77 +9,40 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-
-interface FacilityItem {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-}
-
-interface GalleryItem {
-  id: string;
-  src: string;
-  alt: string;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 const iconMap: Record<string, any> = {
   Book, Beaker, Monitor, Dumbbell, Music, Trees, Utensils, Building,
 };
-
-const defaultFacilities: FacilityItem[] = [
-  { id: "1", icon: "Book", title: "Library", description: "State-of-the-art library with over 50,000 books, digital resources, and quiet study areas." },
-  { id: "2", icon: "Beaker", title: "Science Labs", description: "Modern physics, chemistry, and biology laboratories equipped with latest equipment." },
-  { id: "3", icon: "Monitor", title: "Computer Lab", description: "Advanced computer facilities with high-speed internet and latest software." },
-  { id: "4", icon: "Dumbbell", title: "Sports Complex", description: "Indoor and outdoor sports facilities including basketball courts, swimming pool, and gymnasium." },
-  { id: "5", icon: "Music", title: "Music Room", description: "Fully equipped music room with various instruments for developing artistic talents." },
-  { id: "6", icon: "Trees", title: "Green Campus", description: "Eco-friendly campus with beautiful gardens, trees, and sustainable practices." },
-  { id: "7", icon: "Utensils", title: "Cafeteria", description: "Hygienic cafeteria serving nutritious meals prepared by professional chefs." },
-  { id: "8", icon: "Building", title: "Smart Classrooms", description: "Technology-enabled classrooms with projectors, smart boards, and AC facilities." },
-];
-
-const defaultGallery: GalleryItem[] = [
-  { id: "1", src: "https://images.unsplash.com/photo-1562774053-701939374585?w=600&h=400&fit=crop", alt: "Main Building" },
-  { id: "2", src: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&h=400&fit=crop", alt: "Classroom" },
-  { id: "3", src: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=400&fit=crop", alt: "Computer Lab" },
-  { id: "4", src: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&h=400&fit=crop", alt: "Library" },
-  { id: "5", src: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop", alt: "Sports Ground" },
-  { id: "6", src: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop", alt: "Campus View" },
-];
-
 const iconOptions = Object.keys(iconMap);
 
 const Campus = () => {
   const { isAdmin } = useAdmin();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Facilities state
-  const [facilities, setFacilities] = useState<FacilityItem[]>(() => {
-    const saved = localStorage.getItem("scholar_facilities");
-    return saved ? JSON.parse(saved) : defaultFacilities;
-  });
+  const [facilities, setFacilities] = useState<any[]>([]);
+  const [gallery, setGallery] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [facilityDialogOpen, setFacilityDialogOpen] = useState(false);
-  const [editingFacility, setEditingFacility] = useState<FacilityItem | null>(null);
+  const [editingFacility, setEditingFacility] = useState<any | null>(null);
   const [facilityForm, setFacilityForm] = useState({ title: "", description: "", icon: "Building" });
 
-  // Gallery state
-  const [gallery, setGallery] = useState<GalleryItem[]>(() => {
-    const saved = localStorage.getItem("scholar_gallery");
-    return saved ? JSON.parse(saved) : defaultGallery;
-  });
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
-  const [editingGallery, setEditingGallery] = useState<GalleryItem | null>(null);
+  const [editingGallery, setEditingGallery] = useState<any | null>(null);
   const [galleryForm, setGalleryForm] = useState({ src: "", alt: "" });
 
-  const saveFacilities = (updated: FacilityItem[]) => {
-    setFacilities(updated);
-    localStorage.setItem("scholar_facilities", JSON.stringify(updated));
+  const fetchData = async () => {
+    const [fRes, gRes] = await Promise.all([
+      supabase.from("facilities").select("*").order("sort_order"),
+      supabase.from("gallery").select("*").order("sort_order"),
+    ]);
+    setFacilities(fRes.data || []);
+    setGallery(gRes.data || []);
+    setLoading(false);
   };
 
-  const saveGallery = (updated: GalleryItem[]) => {
-    setGallery(updated);
-    localStorage.setItem("scholar_gallery", JSON.stringify(updated));
-  };
+  useEffect(() => { fetchData(); }, []);
 
   // Facility CRUD
   const openAddFacility = () => {
@@ -88,27 +51,32 @@ const Campus = () => {
     setFacilityDialogOpen(true);
   };
 
-  const openEditFacility = (f: FacilityItem) => {
+  const openEditFacility = (f: any) => {
     setEditingFacility(f);
     setFacilityForm({ title: f.title, description: f.description, icon: f.icon });
     setFacilityDialogOpen(true);
   };
 
-  const handleSaveFacility = () => {
+  const handleSaveFacility = async () => {
     if (!facilityForm.title || !facilityForm.description) return toast.error("Title and Description are required");
     if (editingFacility) {
-      saveFacilities(facilities.map((f) => (f.id === editingFacility.id ? { ...f, ...facilityForm } : f)));
+      const { error } = await supabase.from("facilities").update(facilityForm).eq("id", editingFacility.id);
+      if (error) return toast.error("Failed to update");
       toast.success("Facility updated!");
     } else {
-      saveFacilities([...facilities, { id: Date.now().toString(), ...facilityForm }]);
+      const { error } = await supabase.from("facilities").insert({ ...facilityForm, sort_order: facilities.length + 1 });
+      if (error) return toast.error("Failed to add");
       toast.success("Facility added!");
     }
     setFacilityDialogOpen(false);
+    fetchData();
   };
 
-  const handleDeleteFacility = (id: string) => {
-    saveFacilities(facilities.filter((f) => f.id !== id));
+  const handleDeleteFacility = async (id: string) => {
+    const { error } = await supabase.from("facilities").delete().eq("id", id);
+    if (error) return toast.error("Failed to delete");
     toast.success("Facility removed!");
+    fetchData();
   };
 
   // Gallery CRUD
@@ -118,28 +86,41 @@ const Campus = () => {
     setGalleryDialogOpen(true);
   };
 
-  const openEditGallery = (g: GalleryItem) => {
+  const openEditGallery = (g: any) => {
     setEditingGallery(g);
     setGalleryForm({ src: g.src, alt: g.alt });
     setGalleryDialogOpen(true);
   };
 
-  const handleSaveGallery = () => {
+  const handleSaveGallery = async () => {
     if (!galleryForm.src || !galleryForm.alt) return toast.error("Image URL and Title are required");
     if (editingGallery) {
-      saveGallery(gallery.map((g) => (g.id === editingGallery.id ? { ...g, ...galleryForm } : g)));
+      const { error } = await supabase.from("gallery").update(galleryForm).eq("id", editingGallery.id);
+      if (error) return toast.error("Failed to update");
       toast.success("Gallery image updated!");
     } else {
-      saveGallery([...gallery, { id: Date.now().toString(), ...galleryForm }]);
+      const { error } = await supabase.from("gallery").insert({ ...galleryForm, sort_order: gallery.length + 1 });
+      if (error) return toast.error("Failed to add");
       toast.success("Gallery image added!");
     }
     setGalleryDialogOpen(false);
+    fetchData();
   };
 
-  const handleDeleteGallery = (id: string) => {
-    saveGallery(gallery.filter((g) => g.id !== id));
+  const handleDeleteGallery = async (id: string) => {
+    const { error } = await supabase.from("gallery").delete().eq("id", id);
+    if (error) return toast.error("Failed to delete");
     toast.success("Gallery image removed!");
+    fetchData();
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <section className="py-16"><div className="container mx-auto px-4 text-center"><p className="text-muted-foreground">Loading...</p></div></section>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -237,11 +218,7 @@ const Campus = () => {
                     </button>
                   </div>
                 )}
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  className="w-full h-32 sm:h-40 md:h-52 lg:h-64 object-cover"
-                />
+                <img src={image.src} alt={image.alt} className="w-full h-32 sm:h-40 md:h-52 lg:h-64 object-cover" />
                 <div className="p-2 sm:p-3 md:p-4 bg-card">
                   <p className="text-xs sm:text-sm font-medium text-foreground">{image.alt}</p>
                 </div>
@@ -272,21 +249,9 @@ const Campus = () => {
 
       {/* Image Modal */}
       {selectedImage && (
-        <div
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in"
-          onClick={() => setSelectedImage(null)}
-        >
-          <img
-            src={selectedImage}
-            alt="Campus"
-            className="max-w-full max-h-full object-contain rounded-lg animate-scale-in"
-          />
-          <button
-            className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white text-xl sm:text-2xl hover:opacity-75"
-            onClick={() => setSelectedImage(null)}
-          >
-            ✕
-          </button>
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in" onClick={() => setSelectedImage(null)}>
+          <img src={selectedImage} alt="Campus" className="max-w-full max-h-full object-contain rounded-lg animate-scale-in" />
+          <button className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white text-xl sm:text-2xl hover:opacity-75" onClick={() => setSelectedImage(null)}>✕</button>
         </div>
       )}
 
