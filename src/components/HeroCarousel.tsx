@@ -20,9 +20,9 @@ const HeroCarousel = () => {
     setCurrent((prev) => (prev - 1 + total) % total);
   }, [total]);
 
-  // Auto-slide
+  // Auto-slide (slower)
   useEffect(() => {
-    const timer = setInterval(next, 4000);
+    const timer = setInterval(next, 7000);
     return () => clearInterval(timer);
   }, [next]);
 
