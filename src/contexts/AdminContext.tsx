@@ -23,7 +23,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AdminContext.Provider value={{ isAdmin, toggleAdmin: () => setIsAdmin((p) => { const n = !p; localStorage.setItem("scholar_admin", String(n)); return n; }) }}>
+    <AdminContext.Provider value={{ isAdmin, toggleAdmin: () => setIsAdmin((p) => !p) }}>
       {children}
     </AdminContext.Provider>
   );
