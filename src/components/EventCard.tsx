@@ -18,24 +18,24 @@ const EventCard = ({ title, description, date, image, className, style }: EventC
       )}
       style={style}
     >
-      <div className="image-zoom h-48 md:h-56">
+      <div className="image-zoom h-40 sm:h-48 md:h-56">
         <img
           src={image}
           alt={title}
           className="w-full h-full object-cover"
         />
       </div>
-      <div className="p-5">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+      <div className="p-3 sm:p-4 md:p-5">
+        <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider mb-1.5 sm:mb-2">
           {date}
         </p>
-        <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2">
+        <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground mb-1.5 sm:mb-2 line-clamp-2">
           {title}
         </h3>
-        <p className="text-sm text-muted-foreground line-clamp-3">
+        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
           {description}
         </p>
-        <button className="mt-4 text-sm font-semibold text-primary hover:text-accent transition-colors duration-200 nav-link">
+        <button className="mt-3 sm:mt-4 text-xs sm:text-sm font-semibold text-primary hover:text-accent transition-colors duration-200 nav-link">
           Read More
         </button>
       </div>
