@@ -17,6 +17,7 @@ const navLinks = [
 
 const Navbar = () => {
   const { isAdmin, toggleAdmin } = useAdmin();
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
