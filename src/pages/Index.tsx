@@ -109,13 +109,17 @@ const Index = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {events.map((event, index) => (
-              <EventCard
+              <div
                 key={event.title}
-                id={event.id}
-                {...event}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${0.2 + index * 0.1}s` }}
-              />
+                className="animate-fade-in-up opacity-0"
+                style={{ animationDelay: `${0.2 + index * 0.15}s`, animationFillMode: "forwards" }}
+              >
+                <EventCard
+                  id={event.id}
+                  {...event}
+                  className="hover-scale"
+                />
+              </div>
             ))}
           </div>
 
