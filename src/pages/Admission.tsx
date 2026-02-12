@@ -112,90 +112,13 @@ const Admission = () => {
 
     const currentReceipt = receipt;
 
-    const docImages = receipt.attachments
+    const docImages = currentReceipt.attachments
       .map((att) => {
-        if (isImageType(att.type)) {
-          return `
-            <div class="doc-item">
-              <p class="doc-label">${att.label}</p>
-              <img src="${att.dataUrl}" alt="${att.label}" class="doc-img" />
-              <p class="doc-filename">${att.name}</p>
-            </div>`;
-        }
-        return `
-          <div class="doc-item">
-            <p class="doc-label">${att.label}</p>
-            <div class="pdf-placeholder">
-              <span>📄</span>
-              <span>${att.name}</span>
-            </div>
-            <p class="doc-filename">PDF Document</p>
-          </div>`;
-      })
-      .join("");
-
-    printWindow.document.write(`
-      <html><head><title>Admission Receipt - ${receipt.receiptNo}</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Georgia, serif; padding: 20px; color: #333; background: #fff; }
-        .receipt { border: 2px solid #8B0000; padding: 24px; max-width: 700px; margin: auto; }
-        .header { text-align: center; border-bottom: 2px solid #8B0000; padding-bottom: 16px; margin-bottom: 20px; }
-        .logo { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 8px; object-fit: cover; }
-        .header h1 { color: #8B0000; font-size: 20px; }
-        .header .subtitle { font-size: 12px; color: #666; margin-top: 4px; }
-        .contact-info { font-size: 11px; color: #555; margin-top: 6px; line-height: 1.5; }
-        .row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px dashed #ccc; font-size: 13px; }
-        .label { font-weight: bold; color: #8B0000; }
-        .docs-section { margin-top: 20px; page-break-inside: avoid; }
-        .docs-title { font-size: 14px; font-weight: bold; color: #8B0000; border-bottom: 1px solid #8B0000; padding-bottom: 6px; margin-bottom: 12px; }
-        .doc-item { margin-bottom: 16px; page-break-inside: avoid; }
-        .doc-label { font-weight: bold; color: #8B0000; font-size: 12px; margin-bottom: 6px; }
-        .doc-img { max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; display: block; }
-        .doc-filename { font-size: 10px; color: #888; margin-top: 4px; }
-        .pdf-placeholder { border: 1px solid #ddd; border-radius: 4px; padding: 16px; text-align: center; background: #f9f9f9; font-size: 13px; }
-        .pdf-placeholder span { display: block; }
-        .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; }
-        @media print { body { padding: 0; } .receipt { border: none; } }
-      </style></head><body>
-      <div class="receipt">
-        <div class="header">
-          <img src="${scholarLogo}" class="logo" alt="Logo" />
-          <h1>SCHOLAR EDUCATIONAL CAMPUS</h1>
-          <p class="subtitle">Admission Receipt</p>
-          <p class="contact-info">
-            📞 +91 98765 43210 &nbsp;|&nbsp; ✉ info@scholarcampus.edu<br/>
-            📍 Scholar Campus Road, Education City
-          </p>
-        </div>
-
-        <div class="row"><span class="label">Receipt No:</span><span>${receipt.receiptNo}</span></div>
-        <div class="row"><span class="label">Date:</span><span>${receipt.date}</span></div>
-        <div class="row"><span class="label">Student Name:</span><span>${receipt.studentName}</span></div>
-        <div class="row"><span class="label">Class:</span><span>${receipt.class}</span></div>
-        <div class="row"><span class="label">Address:</span><span>${receipt.address}</span></div>
-        <div class="row"><span class="label">Percentage:</span><span>${receipt.percentage}%</span></div>
-
-        ${receipt.attachments.length > 0 ? `
-          <div class="docs-section">
-            <p class="docs-title">Submitted Documents</p>
-            ${docImages}
-          </div>
-        ` : ""}
-
-        <div class="footer">
-          <p>This is a computer-generated receipt. No signature required.</p>
-          <p>Scholar Educational Campus | +91 98765 43210</p>
-        </div>
-      </div>
-      <script>
-        document.title = "Admission_Receipt_${receipt.receiptNo}";
-        setTimeout(() => window.print(), 500);
-      <\/script>
-      </body></html>
-    `);
+...
     printWindow.document.close();
-  };
+
+    // Reset form after download
+    handleCancel();
 
   if (receipt) {
     return (
