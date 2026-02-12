@@ -18,6 +18,9 @@ const stats = [
 const Index = () => {
   return (
     <Layout>
+      {/* Hero Carousel */}
+      <HeroCarousel />
+
       {/* Hero Section */}
       <section className="relative min-h-[60vh] sm:min-h-[70vh] md:min-h-[80vh] flex items-center justify-center overflow-hidden">
         {/* Background Pattern */}
