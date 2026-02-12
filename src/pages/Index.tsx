@@ -2,31 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import EventCard from "@/components/EventCard";
+import HeroCarousel from "@/components/HeroCarousel";
 import { ArrowRight, BookOpen, Users, Award, GraduationCap } from "lucide-react";
-import event1Img from "@/assets/Event1.jpg";
-import event2Img from "@/assets/Event2.jpg";
-import event4Img from "@/assets/Event4.jpg";
+import { defaultEvents } from "@/data/events";
 
-const events = [
-  {
-    title: "Educational Expo & Conference 2025",
-    description: "Join us for an exciting educational expo featuring innovative teaching methods and technologies.",
-    date: "March 15, 2025",
-    image: event2Img,
-  },
-  {
-    title: "Glimpse of Urooj 2025",
-    description: "Annual cultural festival celebrating talent, creativity, and the spirit of our students.",
-    date: "February 28, 2025",
-    image: event1Img,
-  },
-  {
-    title: "POCSO Act 2012 Awareness Workshop",
-    description: "Important awareness session about child protection laws and safety measures.",
-    date: "February 20, 2025",
-    image: event4Img,
-  },
-];
+const events = defaultEvents.slice(0, 3);
 
 const stats = [
   { icon: Users, value: "5000+", label: "Students" },
