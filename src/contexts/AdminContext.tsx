@@ -10,16 +10,12 @@ const AdminContext = createContext<AdminContextType>({ isAdmin: false, toggleAdm
 export const useAdmin = () => useContext(AdminContext);
 
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
-  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("scholar_admin") === "true");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === "A") {
-        setIsAdmin((prev) => {
-          const next = !prev;
-          localStorage.setItem("scholar_admin", String(next));
-          return next;
-        });
+        setIsAdmin((prev) => !prev);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -27,7 +23,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <AdminContext.Provider value={{ isAdmin, toggleAdmin: () => setIsAdmin((p) => { const n = !p; localStorage.setItem("scholar_admin", String(n)); return n; }) }}>
+    <AdminContext.Provider value={{ isAdmin, toggleAdmin: () => setIsAdmin((p) => !p) }}>
       {children}
     </AdminContext.Provider>
   );
