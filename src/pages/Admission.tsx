@@ -198,6 +198,7 @@ const Admission = () => {
 
     // Reset form after PDF download
     handleCancel();
+  };
 
   if (receipt) {
     return (
