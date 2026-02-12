@@ -114,7 +114,8 @@ const Navbar = () => {
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {link.name}
-            </Link>
+              </Link>
+            ))}
             {isAdmin && (
               <div className="px-6 py-3">
                 <Button onClick={toggleAdmin} variant="outline" className="w-full border-destructive text-destructive hover:bg-destructive/10 rounded-full">
@@ -122,7 +123,6 @@ const Navbar = () => {
                 </Button>
               </div>
             )}
-            ))}
             <Link to="/contact" className="px-6 py-3">
               <Button className="w-full bg-primary text-primary-foreground font-semibold rounded-full">
                 Contact Us
