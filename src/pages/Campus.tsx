@@ -29,39 +29,39 @@ const Campus = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="py-16 bg-secondary/30">
+      <section className="py-10 sm:py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Building className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground animate-fade-in">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <Building className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground animate-fade-in">
               Our Campus
             </h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.1s" }}>
             Explore our world-class facilities and beautiful campus environment
           </p>
         </div>
       </section>
 
       {/* Facilities Section */}
-      <section className="py-20">
+      <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-4 animate-fade-in">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center mb-3 sm:mb-4 animate-fade-in">
             Campus Facilities
           </h2>
-          <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground text-center mb-6 sm:mb-8 md:mb-12 max-w-2xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.1s" }}>
             Our campus is designed to provide the best learning environment with modern amenities
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
             {facilities.map((facility, index) => (
               <div 
                 key={facility.title}
-                className="bg-card p-6 rounded-lg card-hover animate-fade-in-up"
+                className="bg-card p-3 sm:p-4 md:p-6 rounded-lg card-hover animate-fade-in-up"
                 style={{ animationDelay: `${0.1 + index * 0.05}s` }}
               >
-                <facility.icon className="w-10 h-10 text-primary mb-4" />
-                <h3 className="text-lg font-bold text-foreground mb-2">{facility.title}</h3>
-                <p className="text-sm text-muted-foreground">{facility.description}</p>
+                <facility.icon className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mb-2 sm:mb-3 md:mb-4" />
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground mb-1 sm:mb-2">{facility.title}</h3>
+                <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{facility.description}</p>
               </div>
             ))}
           </div>
@@ -69,15 +69,15 @@ const Campus = () => {
       </section>
 
       {/* Gallery Section */}
-      <section className="py-20 bg-secondary/30">
+      <section className="py-10 sm:py-14 md:py-20 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-4 animate-fade-in">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center mb-3 sm:mb-4 animate-fade-in">
             Campus Gallery
           </h2>
-          <p className="text-muted-foreground text-center mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground text-center mb-6 sm:mb-8 md:mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             Take a visual tour of our beautiful campus
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {galleryImages.map((image, index) => (
               <div 
                 key={image.alt}
@@ -88,10 +88,10 @@ const Campus = () => {
                 <img 
                   src={image.src} 
                   alt={image.alt}
-                  className="w-full h-64 object-cover"
+                  className="w-full h-32 sm:h-40 md:h-52 lg:h-64 object-cover"
                 />
-                <div className="p-4 bg-card">
-                  <p className="text-sm font-medium text-foreground">{image.alt}</p>
+                <div className="p-2 sm:p-3 md:p-4 bg-card">
+                  <p className="text-xs sm:text-sm font-medium text-foreground">{image.alt}</p>
                 </div>
               </div>
             ))}
@@ -100,19 +100,19 @@ const Campus = () => {
       </section>
 
       {/* Virtual Tour Section */}
-      <section className="py-20">
+      <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4 animate-fade-in">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-3 sm:mb-4 animate-fade-in">
             Virtual Campus Tour
           </h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-4 sm:mb-6 md:mb-8 max-w-2xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.1s" }}>
             Experience our campus from anywhere in the world
           </p>
           <div className="aspect-video max-w-4xl mx-auto bg-secondary rounded-lg flex items-center justify-center animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            <div className="text-center p-8">
-              <Building className="w-16 h-16 text-primary mx-auto mb-4 animate-float" />
-              <p className="text-muted-foreground">Virtual tour coming soon</p>
-              <p className="text-sm text-muted-foreground mt-2">Contact us to schedule an in-person visit</p>
+            <div className="text-center p-4 sm:p-6 md:p-8">
+              <Building className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-primary mx-auto mb-2 sm:mb-3 md:mb-4 animate-float" />
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Virtual tour coming soon</p>
+              <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1 sm:mt-2">Contact us to schedule an in-person visit</p>
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@ const Campus = () => {
       {/* Image Modal */}
       {selectedImage && (
         <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in"
           onClick={() => setSelectedImage(null)}
         >
           <img 
@@ -130,7 +130,7 @@ const Campus = () => {
             className="max-w-full max-h-full object-contain rounded-lg animate-scale-in"
           />
           <button 
-            className="absolute top-4 right-4 text-white text-2xl hover:opacity-75"
+            className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white text-xl sm:text-2xl hover:opacity-75"
             onClick={() => setSelectedImage(null)}
           >
             ✕

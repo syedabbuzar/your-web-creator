@@ -76,40 +76,40 @@ const About = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="py-16 bg-secondary/30">
+      <section className="py-10 sm:py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Users className="w-8 h-8 text-primary" />
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground animate-fade-in">About Us</h1>
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground animate-fade-in">About Us</h1>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.1s" }}>
             Discover our journey, mission, and the values that guide Scholar Educational Campus
           </p>
         </div>
       </section>
 
       {/* History Section */}
-      <section className="py-20">
+      <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
             <div className="animate-slide-in-left">
-              <h2 className="text-3xl font-bold text-foreground mb-6">Our History</h2>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-4 sm:mb-6">Our History</h2>
+              <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
                 Founded in 1998, Scholar Educational Campus has been a beacon of educational excellence for over 25 years.
               </p>
-              <p className="text-muted-foreground mb-4 leading-relaxed">
+              <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
                 Our journey began with a simple belief: every child deserves access to world-class education that nurtures both academic excellence and character development.
               </p>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                 Over the years, we have produced thousands of successful alumni who are making their mark in various fields across the globe.
               </p>
             </div>
             <div className="animate-slide-in-right">
               <div className="relative">
-                <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop" alt="School Building" className="rounded-lg shadow-xl" />
-                <div className="absolute -bottom-6 -left-6 bg-primary text-primary-foreground p-6 rounded-lg shadow-lg">
-                  <p className="text-4xl font-bold">25+</p>
-                  <p className="text-sm opacity-90">Years of Excellence</p>
+                <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop" alt="School Building" className="rounded-lg shadow-xl w-full h-auto" />
+                <div className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 bg-primary text-primary-foreground p-3 sm:p-4 md:p-6 rounded-lg shadow-lg">
+                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold">25+</p>
+                  <p className="text-[10px] sm:text-xs md:text-sm opacity-90">Years of Excellence</p>
                 </div>
               </div>
             </div>
@@ -118,12 +118,12 @@ const About = () => {
       </section>
 
       {/* VERITAS Section */}
-      <section className="py-20 bg-primary text-primary-foreground">
+      <section className="py-10 sm:py-14 md:py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-5xl md:text-6xl font-bold mb-4 animate-fade-in font-serif">VERITAS</h2>
-          <p className="text-xl mb-8 opacity-90 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>Truth • Knowledge • Excellence</p>
-          <div className="max-w-3xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            <p className="text-lg leading-relaxed opacity-90">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 animate-fade-in font-serif">VERITAS</h2>
+          <p className="text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 opacity-90 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>Truth • Knowledge • Excellence</p>
+          <div className="max-w-3xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.2s" }}>
+            <p className="text-sm sm:text-base md:text-lg leading-relaxed opacity-90">
               VERITAS, Latin for "Truth," is the cornerstone of our educational philosophy. We believe that the pursuit of truth through knowledge leads to excellence in all aspects of life.
             </p>
           </div>
@@ -131,15 +131,15 @@ const About = () => {
       </section>
 
       {/* Values Section */}
-      <section className="py-20">
+      <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-12 animate-fade-in">Our Core Values</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center mb-6 sm:mb-8 md:mb-12 animate-fade-in">Our Core Values</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
             {values.map((value, index) => (
-              <div key={value.title} className="text-center p-6 bg-card rounded-lg card-hover animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                <value.icon className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-foreground mb-2">{value.title}</h3>
-                <p className="text-muted-foreground text-sm">{value.description}</p>
+              <div key={value.title} className="text-center p-3 sm:p-4 md:p-6 bg-card rounded-lg card-hover animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+                <value.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-primary mx-auto mb-2 sm:mb-3 md:mb-4" />
+                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2">{value.title}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">{value.description}</p>
               </div>
             ))}
           </div>
@@ -147,20 +147,20 @@ const About = () => {
       </section>
 
       {/* Vision & Mission */}
-      <section className="py-20 bg-secondary/30">
+      <section className="py-10 sm:py-14 md:py-20 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12">
-            <div className="bg-card p-8 rounded-lg shadow-lg animate-slide-in-left">
-              <BookOpen className="w-10 h-10 text-primary mb-4" />
-              <h3 className="text-2xl font-bold text-foreground mb-4">Our Vision</h3>
-              <p className="text-muted-foreground leading-relaxed">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-12">
+            <div className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-lg animate-slide-in-left">
+              <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mb-3 sm:mb-4" />
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-3 md:mb-4">Our Vision</h3>
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">
                 To be a globally recognized institution that nurtures future leaders, innovators, and responsible citizens who contribute positively to society.
               </p>
             </div>
-            <div className="bg-card p-8 rounded-lg shadow-lg animate-slide-in-right">
-              <Target className="w-10 h-10 text-primary mb-4" />
-              <h3 className="text-2xl font-bold text-foreground mb-4">Our Mission</h3>
-              <p className="text-muted-foreground leading-relaxed">
+            <div className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-lg animate-slide-in-right">
+              <Target className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mb-3 sm:mb-4" />
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-3 md:mb-4">Our Mission</h3>
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">
                 To provide holistic education that combines academic excellence with character development, encouraging curiosity, critical thinking, and creativity.
               </p>
             </div>
@@ -169,37 +169,37 @@ const About = () => {
       </section>
 
       {/* Leadership Section */}
-      <section className="py-20">
+      <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <h2 className="text-3xl font-bold text-foreground text-center animate-fade-in">Our Leadership</h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center animate-fade-in">Our Leadership</h2>
             {isAdmin && (
-              <Button onClick={openAdd} size="sm" className="bg-primary text-primary-foreground rounded-full">
-                <Plus className="w-4 h-4 mr-1" /> Add
+              <Button onClick={openAdd} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm">
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add
               </Button>
             )}
           </div>
-          <p className="text-muted-foreground text-center mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+          <p className="text-xs sm:text-sm md:text-base text-muted-foreground text-center mb-6 sm:mb-8 md:mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             Meet the dedicated team leading Scholar Educational Campus
           </p>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
             {leaders.map((leader, index) => (
               <div key={leader.id} className="text-center animate-fade-in-up relative group" style={{ animationDelay: `${0.2 + index * 0.1}s` }}>
                 {isAdmin && (
                   <div className="absolute top-0 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    <button onClick={() => openEdit(leader)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
-                      <Pencil className="w-4 h-4 text-primary" />
+                    <button onClick={() => openEdit(leader)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
+                      <Pencil className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                     </button>
-                    <button onClick={() => handleDelete(leader.id)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
-                      <Trash2 className="w-4 h-4 text-destructive" />
+                    <button onClick={() => handleDelete(leader.id)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-destructive" />
                     </button>
                   </div>
                 )}
-                <div className="w-40 h-40 mx-auto mb-4 rounded-full overflow-hidden image-zoom border-4 border-primary/20">
+                <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 mx-auto mb-2 sm:mb-3 md:mb-4 rounded-full overflow-hidden image-zoom border-2 sm:border-4 border-primary/20">
                   <img src={leader.image} alt={leader.name} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground">{leader.name}</h3>
-                <p className="text-sm text-muted-foreground">{leader.role}</p>
+                <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-foreground">{leader.name}</h3>
+                <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{leader.role}</p>
               </div>
             ))}
           </div>
@@ -208,24 +208,24 @@ const About = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="mx-4 max-w-md sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingLeader ? "Edit Leader" : "Add Leader"}</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">{editingLeader ? "Edit Leader" : "Add Leader"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Name *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Enter name" />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Name *</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Enter name" className="text-sm" />
             </div>
-            <div className="space-y-2">
-              <Label>Role *</Label>
-              <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Enter role" />
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Role *</Label>
+              <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Enter role" className="text-sm" />
             </div>
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Enter image URL (optional)" />
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Image URL</Label>
+              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Enter image URL (optional)" className="text-sm" />
             </div>
-            <Button onClick={handleSave} className="w-full bg-primary text-primary-foreground">{editingLeader ? "Update" : "Add"}</Button>
+            <Button onClick={handleSave} className="w-full bg-primary text-primary-foreground text-sm">{editingLeader ? "Update" : "Add"}</Button>
           </div>
         </DialogContent>
       </Dialog>
