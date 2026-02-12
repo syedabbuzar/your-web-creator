@@ -1,30 +1,145 @@
 import Layout from "@/components/Layout";
-import { Building, Book, Beaker, Music, Dumbbell, Monitor, Trees, Utensils } from "lucide-react";
+import { Building, Book, Beaker, Music, Dumbbell, Monitor, Trees, Utensils, Plus, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAdmin } from "@/contexts/AdminContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
-const facilities = [
-  { icon: Book, title: "Library", description: "State-of-the-art library with over 50,000 books, digital resources, and quiet study areas." },
-  { icon: Beaker, title: "Science Labs", description: "Modern physics, chemistry, and biology laboratories equipped with latest equipment." },
-  { icon: Monitor, title: "Computer Lab", description: "Advanced computer facilities with high-speed internet and latest software." },
-  { icon: Dumbbell, title: "Sports Complex", description: "Indoor and outdoor sports facilities including basketball courts, swimming pool, and gymnasium." },
-  { icon: Music, title: "Music Room", description: "Fully equipped music room with various instruments for developing artistic talents." },
-  { icon: Trees, title: "Green Campus", description: "Eco-friendly campus with beautiful gardens, trees, and sustainable practices." },
-  { icon: Utensils, title: "Cafeteria", description: "Hygienic cafeteria serving nutritious meals prepared by professional chefs." },
-  { icon: Building, title: "Smart Classrooms", description: "Technology-enabled classrooms with projectors, smart boards, and AC facilities." },
+interface FacilityItem {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+}
+
+interface GalleryItem {
+  id: string;
+  src: string;
+  alt: string;
+}
+
+const iconMap: Record<string, any> = {
+  Book, Beaker, Monitor, Dumbbell, Music, Trees, Utensils, Building,
+};
+
+const defaultFacilities: FacilityItem[] = [
+  { id: "1", icon: "Book", title: "Library", description: "State-of-the-art library with over 50,000 books, digital resources, and quiet study areas." },
+  { id: "2", icon: "Beaker", title: "Science Labs", description: "Modern physics, chemistry, and biology laboratories equipped with latest equipment." },
+  { id: "3", icon: "Monitor", title: "Computer Lab", description: "Advanced computer facilities with high-speed internet and latest software." },
+  { id: "4", icon: "Dumbbell", title: "Sports Complex", description: "Indoor and outdoor sports facilities including basketball courts, swimming pool, and gymnasium." },
+  { id: "5", icon: "Music", title: "Music Room", description: "Fully equipped music room with various instruments for developing artistic talents." },
+  { id: "6", icon: "Trees", title: "Green Campus", description: "Eco-friendly campus with beautiful gardens, trees, and sustainable practices." },
+  { id: "7", icon: "Utensils", title: "Cafeteria", description: "Hygienic cafeteria serving nutritious meals prepared by professional chefs." },
+  { id: "8", icon: "Building", title: "Smart Classrooms", description: "Technology-enabled classrooms with projectors, smart boards, and AC facilities." },
 ];
 
-const galleryImages = [
-  { src: "https://images.unsplash.com/photo-1562774053-701939374585?w=600&h=400&fit=crop", alt: "Main Building" },
-  { src: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&h=400&fit=crop", alt: "Classroom" },
-  { src: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=400&fit=crop", alt: "Computer Lab" },
-  { src: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&h=400&fit=crop", alt: "Library" },
-  { src: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop", alt: "Sports Ground" },
-  { src: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop", alt: "Campus View" },
+const defaultGallery: GalleryItem[] = [
+  { id: "1", src: "https://images.unsplash.com/photo-1562774053-701939374585?w=600&h=400&fit=crop", alt: "Main Building" },
+  { id: "2", src: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&h=400&fit=crop", alt: "Classroom" },
+  { id: "3", src: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&h=400&fit=crop", alt: "Computer Lab" },
+  { id: "4", src: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&h=400&fit=crop", alt: "Library" },
+  { id: "5", src: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600&h=400&fit=crop", alt: "Sports Ground" },
+  { id: "6", src: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&h=400&fit=crop", alt: "Campus View" },
 ];
+
+const iconOptions = Object.keys(iconMap);
 
 const Campus = () => {
+  const { isAdmin } = useAdmin();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Facilities state
+  const [facilities, setFacilities] = useState<FacilityItem[]>(() => {
+    const saved = localStorage.getItem("scholar_facilities");
+    return saved ? JSON.parse(saved) : defaultFacilities;
+  });
+  const [facilityDialogOpen, setFacilityDialogOpen] = useState(false);
+  const [editingFacility, setEditingFacility] = useState<FacilityItem | null>(null);
+  const [facilityForm, setFacilityForm] = useState({ title: "", description: "", icon: "Building" });
+
+  // Gallery state
+  const [gallery, setGallery] = useState<GalleryItem[]>(() => {
+    const saved = localStorage.getItem("scholar_gallery");
+    return saved ? JSON.parse(saved) : defaultGallery;
+  });
+  const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
+  const [editingGallery, setEditingGallery] = useState<GalleryItem | null>(null);
+  const [galleryForm, setGalleryForm] = useState({ src: "", alt: "" });
+
+  const saveFacilities = (updated: FacilityItem[]) => {
+    setFacilities(updated);
+    localStorage.setItem("scholar_facilities", JSON.stringify(updated));
+  };
+
+  const saveGallery = (updated: GalleryItem[]) => {
+    setGallery(updated);
+    localStorage.setItem("scholar_gallery", JSON.stringify(updated));
+  };
+
+  // Facility CRUD
+  const openAddFacility = () => {
+    setEditingFacility(null);
+    setFacilityForm({ title: "", description: "", icon: "Building" });
+    setFacilityDialogOpen(true);
+  };
+
+  const openEditFacility = (f: FacilityItem) => {
+    setEditingFacility(f);
+    setFacilityForm({ title: f.title, description: f.description, icon: f.icon });
+    setFacilityDialogOpen(true);
+  };
+
+  const handleSaveFacility = () => {
+    if (!facilityForm.title || !facilityForm.description) return toast.error("Title and Description are required");
+    if (editingFacility) {
+      saveFacilities(facilities.map((f) => (f.id === editingFacility.id ? { ...f, ...facilityForm } : f)));
+      toast.success("Facility updated!");
+    } else {
+      saveFacilities([...facilities, { id: Date.now().toString(), ...facilityForm }]);
+      toast.success("Facility added!");
+    }
+    setFacilityDialogOpen(false);
+  };
+
+  const handleDeleteFacility = (id: string) => {
+    saveFacilities(facilities.filter((f) => f.id !== id));
+    toast.success("Facility removed!");
+  };
+
+  // Gallery CRUD
+  const openAddGallery = () => {
+    setEditingGallery(null);
+    setGalleryForm({ src: "", alt: "" });
+    setGalleryDialogOpen(true);
+  };
+
+  const openEditGallery = (g: GalleryItem) => {
+    setEditingGallery(g);
+    setGalleryForm({ src: g.src, alt: g.alt });
+    setGalleryDialogOpen(true);
+  };
+
+  const handleSaveGallery = () => {
+    if (!galleryForm.src || !galleryForm.alt) return toast.error("Image URL and Title are required");
+    if (editingGallery) {
+      saveGallery(gallery.map((g) => (g.id === editingGallery.id ? { ...g, ...galleryForm } : g)));
+      toast.success("Gallery image updated!");
+    } else {
+      saveGallery([...gallery, { id: Date.now().toString(), ...galleryForm }]);
+      toast.success("Gallery image added!");
+    }
+    setGalleryDialogOpen(false);
+  };
+
+  const handleDeleteGallery = (id: string) => {
+    saveGallery(gallery.filter((g) => g.id !== id));
+    toast.success("Gallery image removed!");
+  };
 
   return (
     <Layout>
@@ -46,24 +161,44 @@ const Campus = () => {
       {/* Facilities Section */}
       <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center mb-3 sm:mb-4 animate-fade-in">
-            Campus Facilities
-          </h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center animate-fade-in">
+              Campus Facilities
+            </h2>
+            {isAdmin && (
+              <Button onClick={openAddFacility} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm">
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add Facility
+              </Button>
+            )}
+          </div>
           <p className="text-xs sm:text-sm md:text-base text-muted-foreground text-center mb-6 sm:mb-8 md:mb-12 max-w-2xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.1s" }}>
             Our campus is designed to provide the best learning environment with modern amenities
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-            {facilities.map((facility, index) => (
-              <div 
-                key={facility.title}
-                className="bg-card p-3 sm:p-4 md:p-6 rounded-lg card-hover animate-fade-in-up"
-                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
-              >
-                <facility.icon className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mb-2 sm:mb-3 md:mb-4" />
-                <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground mb-1 sm:mb-2">{facility.title}</h3>
-                <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{facility.description}</p>
-              </div>
-            ))}
+            {facilities.map((facility, index) => {
+              const IconComp = iconMap[facility.icon] || Building;
+              return (
+                <div
+                  key={facility.id}
+                  className="relative group bg-card p-3 sm:p-4 md:p-6 rounded-lg card-hover animate-fade-in-up"
+                  style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                >
+                  {isAdmin && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <button onClick={() => openEditFacility(facility)} className="p-1 bg-card rounded-full shadow-md hover:bg-secondary">
+                        <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
+                      </button>
+                      <button onClick={() => handleDeleteFacility(facility.id)} className="p-1 bg-card rounded-full shadow-md hover:bg-destructive/10">
+                        <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-destructive" />
+                      </button>
+                    </div>
+                  )}
+                  <IconComp className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mb-2 sm:mb-3 md:mb-4" />
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground mb-1 sm:mb-2">{facility.title}</h3>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{facility.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -71,22 +206,39 @@ const Campus = () => {
       {/* Gallery Section */}
       <section className="py-10 sm:py-14 md:py-20 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center mb-3 sm:mb-4 animate-fade-in">
-            Campus Gallery
-          </h2>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center animate-fade-in">
+              Campus Gallery
+            </h2>
+            {isAdmin && (
+              <Button onClick={openAddGallery} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm">
+                <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add Image
+              </Button>
+            )}
+          </div>
           <p className="text-xs sm:text-sm md:text-base text-muted-foreground text-center mb-6 sm:mb-8 md:mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             Take a visual tour of our beautiful campus
           </p>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-            {galleryImages.map((image, index) => (
-              <div 
-                key={image.alt}
-                className="image-zoom rounded-lg overflow-hidden shadow-lg cursor-pointer animate-fade-in-up"
+            {gallery.map((image, index) => (
+              <div
+                key={image.id}
+                className="relative group image-zoom rounded-lg overflow-hidden shadow-lg cursor-pointer animate-fade-in-up"
                 style={{ animationDelay: `${0.1 + index * 0.05}s` }}
                 onClick={() => setSelectedImage(image.src)}
               >
-                <img 
-                  src={image.src} 
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                    <button onClick={(e) => { e.stopPropagation(); openEditGallery(image); }} className="p-1 bg-card rounded-full shadow-md hover:bg-secondary">
+                      <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteGallery(image.id); }} className="p-1 bg-card rounded-full shadow-md hover:bg-destructive/10">
+                      <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-destructive" />
+                    </button>
+                  </div>
+                )}
+                <img
+                  src={image.src}
                   alt={image.alt}
                   className="w-full h-32 sm:h-40 md:h-52 lg:h-64 object-cover"
                 />
@@ -110,7 +262,7 @@ const Campus = () => {
           </p>
           <div className="aspect-video max-w-4xl mx-auto bg-secondary rounded-lg flex items-center justify-center animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
             <div className="text-center p-4 sm:p-6 md:p-8">
-              <Building className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-primary mx-auto mb-2 sm:mb-3 md:mb-4 animate-float" />
+              <Building className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 text-primary mx-auto mb-2 sm:mb-3 md:mb-4" />
               <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Virtual tour coming soon</p>
               <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mt-1 sm:mt-2">Contact us to schedule an in-person visit</p>
             </div>
@@ -120,16 +272,16 @@ const Campus = () => {
 
       {/* Image Modal */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in"
           onClick={() => setSelectedImage(null)}
         >
-          <img 
-            src={selectedImage} 
-            alt="Campus" 
+          <img
+            src={selectedImage}
+            alt="Campus"
             className="max-w-full max-h-full object-contain rounded-lg animate-scale-in"
           />
-          <button 
+          <button
             className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white text-xl sm:text-2xl hover:opacity-75"
             onClick={() => setSelectedImage(null)}
           >
@@ -137,6 +289,57 @@ const Campus = () => {
           </button>
         </div>
       )}
+
+      {/* Facility Dialog */}
+      <Dialog open={facilityDialogOpen} onOpenChange={setFacilityDialogOpen}>
+        <DialogContent className="mx-4 max-w-md sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg">{editingFacility ? "Edit Facility" : "Add Facility"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Title *</Label>
+              <Input value={facilityForm.title} onChange={(e) => setFacilityForm({ ...facilityForm, title: e.target.value })} placeholder="Facility name" className="text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Description *</Label>
+              <Textarea value={facilityForm.description} onChange={(e) => setFacilityForm({ ...facilityForm, description: e.target.value })} placeholder="Facility description" className="text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Icon</Label>
+              <select value={facilityForm.icon} onChange={(e) => setFacilityForm({ ...facilityForm, icon: e.target.value })} className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm">
+                {iconOptions.map((ic) => <option key={ic} value={ic}>{ic}</option>)}
+              </select>
+            </div>
+            <Button onClick={handleSaveFacility} className="w-full bg-primary text-primary-foreground text-sm">{editingFacility ? "Update" : "Add"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Gallery Dialog */}
+      <Dialog open={galleryDialogOpen} onOpenChange={setGalleryDialogOpen}>
+        <DialogContent className="mx-4 max-w-md sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-base sm:text-lg">{editingGallery ? "Edit Image" : "Add Image"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Image URL *</Label>
+              <Input value={galleryForm.src} onChange={(e) => setGalleryForm({ ...galleryForm, src: e.target.value })} placeholder="https://..." className="text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">Title *</Label>
+              <Input value={galleryForm.alt} onChange={(e) => setGalleryForm({ ...galleryForm, alt: e.target.value })} placeholder="Image title" className="text-sm" />
+            </div>
+            {galleryForm.src && (
+              <div className="rounded-md overflow-hidden border border-border">
+                <img src={galleryForm.src} alt="Preview" className="w-full h-32 object-cover" />
+              </div>
+            )}
+            <Button onClick={handleSaveGallery} className="w-full bg-primary text-primary-foreground text-sm">{editingGallery ? "Update" : "Add"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
