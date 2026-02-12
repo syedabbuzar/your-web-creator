@@ -29,7 +29,7 @@ const HeroCarousel = () => {
   if (total === 0) return null;
 
   return (
-    <section className="relative w-full h-48 sm:h-56 md:h-72 lg:h-80 xl:h-96 overflow-hidden">
+    <section className="relative w-full h-[200px] sm:h-[280px] md:h-[380px] lg:h-[450px] xl:h-[520px] overflow-hidden">
       {/* Slides */}
       {events.map((event: any, index: number) => (
         <Link
