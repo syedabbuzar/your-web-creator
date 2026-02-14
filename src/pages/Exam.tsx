@@ -1,21 +1,14 @@
 import Layout from "@/components/Layout";
-import { FileText, Calendar, Download, Clock, BookOpen, AlertCircle, Plus, Pencil, Trash2 } from "lucide-react";
+import { FileText, Calendar, Download, Clock, BookOpen, AlertCircle, Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const resources = [
-  { title: "Examination Guidelines 2025", type: "PDF", size: "2.5 MB" },
-  { title: "Sample Question Papers", type: "ZIP", size: "15 MB" },
-  { title: "Syllabus for 2025-26", type: "PDF", size: "5 MB" },
-  { title: "Exam Hall Ticket Format", type: "PDF", size: "500 KB" },
-];
 
 const guidelines = [
   "Students must carry their hall tickets to the examination center.",
@@ -30,6 +23,7 @@ const Exam = () => {
   const { isAdmin } = useAdmin();
   const [examSchedule, setExamSchedule] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
+  const [resources, setResources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Schedule dialog
@@ -42,13 +36,23 @@ const Exam = () => {
   const [editingResult, setEditingResult] = useState<any>(null);
   const [resultForm, setResultForm] = useState({ title: "", description: "", status: "upcoming", result_date: "" });
 
+  // Resource dialog
+  const [resourceDialog, setResourceDialog] = useState(false);
+  const [editingResource, setEditingResource] = useState<any>(null);
+  const [resourceForm, setResourceForm] = useState({ title: "", file_type: "PDF", file_size: "" });
+  const [resourceFile, setResourceFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const fetchData = async () => {
-    const [schedRes, resRes] = await Promise.all([
+    const [schedRes, resRes, resourcesRes] = await Promise.all([
       supabase.from("exam_schedules").select("*").order("sort_order"),
       supabase.from("exam_results").select("*").order("sort_order"),
+      supabase.from("exam_resources").select("*").order("sort_order"),
     ]);
     setExamSchedule(schedRes.data || []);
     setResults(resRes.data || []);
+    setResources(resourcesRes.data || []);
     setLoading(false);
   };
 
@@ -115,6 +119,66 @@ const Exam = () => {
     const { error } = await supabase.from("exam_results").delete().eq("id", id);
     if (error) return toast.error("Delete failed");
     toast.success("Result removed!");
+    fetchData();
+  };
+
+  // Resource CRUD
+  const openAddResource = () => {
+    setEditingResource(null);
+    setResourceForm({ title: "", file_type: "PDF", file_size: "" });
+    setResourceFile(null);
+    setResourceDialog(true);
+  };
+  const openEditResource = (r: any) => {
+    setEditingResource(r);
+    setResourceForm({ title: r.title, file_type: r.file_type, file_size: r.file_size });
+    setResourceFile(null);
+    setResourceDialog(true);
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+    const { error } = await supabase.storage.from("exam-resources").upload(fileName, file);
+    if (error) throw error;
+    const { data } = supabase.storage.from("exam-resources").getPublicUrl(fileName);
+    return data.publicUrl;
+  };
+
+  const saveResource = async () => {
+    if (!resourceForm.title) return toast.error("Title required");
+    if (!editingResource && !resourceFile) return toast.error("Please select a file");
+    setUploading(true);
+    try {
+      let file_url = editingResource?.file_url || "";
+      let file_size = resourceForm.file_size;
+      if (resourceFile) {
+        file_url = await uploadFile(resourceFile);
+        const sizeMB = (resourceFile.size / (1024 * 1024)).toFixed(1);
+        file_size = `${sizeMB} MB`;
+      }
+      const payload = { title: resourceForm.title, file_type: resourceForm.file_type, file_size, file_url };
+      if (editingResource) {
+        const { error } = await supabase.from("exam_resources").update(payload).eq("id", editingResource.id);
+        if (error) throw error;
+        toast.success("Resource updated!");
+      } else {
+        const { error } = await supabase.from("exam_resources").insert({ ...payload, sort_order: resources.length + 1 });
+        if (error) throw error;
+        toast.success("Resource added!");
+      }
+      setResourceDialog(false);
+      fetchData();
+    } catch {
+      toast.error("Failed to save resource");
+    }
+    setUploading(false);
+  };
+
+  const deleteResource = async (id: string) => {
+    const { error } = await supabase.from("exam_resources").delete().eq("id", id);
+    if (error) return toast.error("Delete failed");
+    toast.success("Resource removed!");
     fetchData();
   };
 
@@ -248,7 +312,7 @@ const Exam = () => {
         </div>
       </section>
 
-      {/* Guidelines Section */}
+      {/* Guidelines & Resources Section */}
       <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12">
@@ -267,25 +331,47 @@ const Exam = () => {
               </ul>
             </div>
             <div className="animate-slide-in-right">
-              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <Download className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">Download Resources</h2>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Download className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">Download Resources</h2>
+                </div>
+                {isAdmin && (
+                  <Button onClick={openAddResource} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm">
+                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add
+                  </Button>
+                )}
               </div>
               <div className="space-y-2 sm:space-y-3 md:space-y-4">
                 {resources.map((resource, index) => (
-                  <div key={resource.title} className="flex items-center justify-between p-3 sm:p-4 bg-card rounded-lg shadow card-hover animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div key={resource.id} className="flex items-center justify-between p-3 sm:p-4 bg-card rounded-lg shadow card-hover animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
                     <div className="flex items-center gap-2 sm:gap-3">
                       <FileText className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
                       <div>
                         <p className="font-medium text-foreground text-xs sm:text-sm">{resource.title}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">{resource.type} • {resource.size}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{resource.file_type} • {resource.file_size}</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground p-1.5 sm:p-2">
-                      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      {isAdmin && (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
+                          <button onClick={() => openEditResource(resource)} className="p-1.5 hover:bg-secondary rounded"><Pencil className="w-3 h-3 text-primary" /></button>
+                          <button onClick={() => deleteResource(resource.id)} className="p-1.5 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
+                        </div>
+                      )}
+                      {resource.file_url && (
+                        <a href={resource.file_url} target="_blank" rel="noopener noreferrer" download>
+                          <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground p-1.5 sm:p-2">
+                            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          </Button>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ))}
+                {resources.length === 0 && !loading && (
+                  <p className="text-center text-muted-foreground text-sm py-4">No resources available yet.</p>
+                )}
               </div>
             </div>
           </div>
@@ -326,6 +412,43 @@ const Exam = () => {
               </div>
             </div>
             <Button onClick={saveResult} className="w-full bg-primary text-primary-foreground text-sm">{editingResult ? "Update" : "Add"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resource Dialog */}
+      <Dialog open={resourceDialog} onOpenChange={setResourceDialog}>
+        <DialogContent className="mx-4 max-w-md">
+          <DialogHeader><DialogTitle className="text-base sm:text-lg">{editingResource ? "Edit Resource" : "Add Resource"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Title *</Label><Input value={resourceForm.title} onChange={e => setResourceForm({ ...resourceForm, title: e.target.value })} placeholder="e.g. Examination Guidelines 2025" className="text-sm" /></div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">File Type</Label>
+              <select value={resourceForm.file_type} onChange={e => setResourceForm({ ...resourceForm, file_type: e.target.value })} className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm">
+                <option value="PDF">PDF</option>
+                <option value="ZIP">ZIP</option>
+                <option value="DOC">DOC</option>
+                <option value="DOCX">DOCX</option>
+                <option value="XLS">XLS</option>
+                <option value="XLSX">XLSX</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">{editingResource ? "Replace File (optional)" : "Upload File *"}</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={e => setResourceFile(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="w-full text-sm">
+                <Upload className="w-4 h-4 mr-2" />
+                {resourceFile ? resourceFile.name : "Choose File"}
+              </Button>
+            </div>
+            <Button onClick={saveResource} disabled={uploading} className="w-full bg-primary text-primary-foreground text-sm">
+              {uploading ? "Uploading..." : editingResource ? "Update" : "Add"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
