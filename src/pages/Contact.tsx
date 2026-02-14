@@ -1,4 +1,5 @@
 import Layout from "@/components/Layout";
+import FloatingActions from "@/components/FloatingActions";
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ const Contact = () => {
 
   return (
     <Layout>
+      <FloatingActions />
       <section className="py-10 sm:py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">

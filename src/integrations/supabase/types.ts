@@ -50,6 +50,66 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_results: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          result_date: string | null
+          sort_order: number
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          result_date?: string | null
+          sort_order?: number
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          result_date?: string | null
+          sort_order?: number
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      exam_schedules: {
+        Row: {
+          classes: string
+          created_at: string
+          end_date: string
+          exam: string
+          id: string
+          sort_order: number
+          start_date: string
+        }
+        Insert: {
+          classes: string
+          created_at?: string
+          end_date: string
+          exam: string
+          id?: string
+          sort_order?: number
+          start_date: string
+        }
+        Update: {
+          classes?: string
+          created_at?: string
+          end_date?: string
+          exam?: string
+          id?: string
+          sort_order?: number
+          start_date?: string
+        }
+        Relationships: []
+      }
       facilities: {
         Row: {
           created_at: string

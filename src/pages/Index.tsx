@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
+import FloatingActions from "@/components/FloatingActions";
 import EventCard from "@/components/EventCard";
 import HeroCarousel from "@/components/HeroCarousel";
 import { ArrowRight, BookOpen, Users, Award, GraduationCap } from "lucide-react";
@@ -27,6 +28,7 @@ const Index = () => {
 
   return (
     <Layout>
+      <FloatingActions />
       {/* Hero Carousel */}
       <HeroCarousel />
 

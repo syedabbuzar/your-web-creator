@@ -49,13 +49,13 @@ const Navbar = () => {
             <img
               src={scholarLogo}
               alt="Scholar Educational Campus Logo"
-              className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full object-cover transition-transform duration-300 group-hover:scale-110"
+              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
             <div>
-              <h1 className="text-[10px] xs:text-xs sm:text-sm md:text-lg lg:text-xl font-bold text-foreground tracking-wide leading-tight">
+              <h1 className="text-xs sm:text-sm md:text-lg lg:text-xl xl:text-2xl font-bold text-foreground tracking-wide leading-tight">
                 SCHOLAR EDUCATIONAL
               </h1>
-              <p className="text-[8px] xs:text-[10px] sm:text-xs md:text-sm lg:text-base text-foreground/80 tracking-widest">
+              <p className="text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-foreground/80 tracking-widest font-medium">
                 CAMPUS
               </p>
             </div>
