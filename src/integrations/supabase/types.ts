@@ -50,6 +50,36 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_resources: {
+        Row: {
+          created_at: string
+          file_size: string
+          file_type: string
+          file_url: string
+          id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          file_size?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          file_size?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: []
+      }
       exam_results: {
         Row: {
           created_at: string

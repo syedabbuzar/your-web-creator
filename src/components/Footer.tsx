@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "lucide-react";
+import scholarLogo from "@/assets/scholar-logo.jpg";
 
 const Footer = () => {
   return (
@@ -9,9 +10,11 @@ const Footer = () => {
           {/* Logo and About */}
           <div className="animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-primary-foreground text-primary flex items-center justify-center font-bold text-base sm:text-xl flex-shrink-0">
-                SC
-              </div>
+              <img
+                src={scholarLogo}
+                alt="Scholar Educational Campus Logo"
+                className="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover flex-shrink-0"
+              />
               <div>
                 <h3 className="font-bold text-base sm:text-lg">SCHOLAR</h3>
                 <p className="text-xs sm:text-sm opacity-80">EDUCATIONAL CAMPUS</p>
