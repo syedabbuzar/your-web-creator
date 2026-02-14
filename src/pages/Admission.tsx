@@ -1,9 +1,11 @@
 import Layout from "@/components/Layout";
+import FloatingActions from "@/components/FloatingActions";
 import { GraduationCap, Download, FileText, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useRef } from "react";
+import { toast } from "sonner";
 import scholarLogo from "@/assets/scholar-logo.jpg";
 
 interface AttachmentData {
@@ -15,6 +17,8 @@ interface AttachmentData {
 
 interface ReceiptData {
   studentName: string;
+  motherName: string;
+  dateOfBirth: string;
   class: string;
   address: string;
   percentage: string;
@@ -35,15 +39,19 @@ const fileToDataUrl = (file: File): Promise<string> => {
 const Admission = () => {
   const [formData, setFormData] = useState({
     studentName: "",
+    motherName: "",
+    dateOfBirth: "",
     class: "",
     address: "",
     percentage: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<Record<string, File | null>>({
     aadharCard: null,
     birthCertificate: null,
     marksheet: null,
     fatherAadhar: null,
+    motherAadhar: null,
   });
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +59,7 @@ const Admission = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: "" });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: string) => {
@@ -63,28 +72,60 @@ const Admission = () => {
     birthCertificate: "Birth Certificate",
     marksheet: "Marksheet",
     fatherAadhar: "Father's Aadhar Card",
+    motherAadhar: "Mother's Aadhar Card",
+  };
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.studentName.trim()) newErrors.studentName = "Student name is required";
+    else if (formData.studentName.trim().length < 2) newErrors.studentName = "Name must be at least 2 characters";
+    else if (formData.studentName.trim().length > 100) newErrors.studentName = "Name must be less than 100 characters";
+
+    if (!formData.motherName.trim()) newErrors.motherName = "Mother's name is required";
+    else if (formData.motherName.trim().length < 2) newErrors.motherName = "Name must be at least 2 characters";
+
+    if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
+    else {
+      const dob = new Date(formData.dateOfBirth);
+      const today = new Date();
+      if (dob >= today) newErrors.dateOfBirth = "Date of birth must be in the past";
+      const age = today.getFullYear() - dob.getFullYear();
+      if (age < 3 || age > 25) newErrors.dateOfBirth = "Age must be between 3 and 25 years";
+    }
+
+    if (!formData.class.trim()) newErrors.class = "Class is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    else if (formData.address.trim().length < 10) newErrors.address = "Address must be at least 10 characters";
+
+    if (!formData.percentage.trim()) newErrors.percentage = "Percentage is required";
+    else {
+      const pct = parseFloat(formData.percentage);
+      if (isNaN(pct) || pct < 0 || pct > 100) newErrors.percentage = "Percentage must be between 0 and 100";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) {
+      toast.error("Please fix the errors in the form");
+      return;
+    }
     setIsSubmitting(true);
-
     try {
       const attachments: AttachmentData[] = [];
       for (const [key, file] of Object.entries(files)) {
         if (file) {
           const dataUrl = await fileToDataUrl(file);
-          attachments.push({
-            name: file.name,
-            label: fileLabels[key],
-            dataUrl,
-            type: file.type,
-          });
+          attachments.push({ name: file.name, label: fileLabels[key], dataUrl, type: file.type });
         }
       }
-
       setReceipt({
         studentName: formData.studentName,
+        motherName: formData.motherName,
+        dateOfBirth: formData.dateOfBirth,
         class: formData.class,
         address: formData.address,
         percentage: formData.percentage,
@@ -98,8 +139,9 @@ const Admission = () => {
   };
 
   const handleCancel = () => {
-    setFormData({ studentName: "", class: "", address: "", percentage: "" });
-    setFiles({ aadharCard: null, birthCertificate: null, marksheet: null, fatherAadhar: null });
+    setFormData({ studentName: "", motherName: "", dateOfBirth: "", class: "", address: "", percentage: "" });
+    setFiles({ aadharCard: null, birthCertificate: null, marksheet: null, fatherAadhar: null, motherAadhar: null });
+    setErrors({});
     setReceipt(null);
   };
 
@@ -109,30 +151,13 @@ const Admission = () => {
     if (!receipt) return;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-
     const currentReceipt = receipt;
-
-    const docImages = currentReceipt.attachments
-      .map((att) => {
-        if (isImageType(att.type)) {
-          return `
-            <div class="doc-item">
-              <p class="doc-label">${att.label}</p>
-              <img src="${att.dataUrl}" alt="${att.label}" class="doc-img" />
-              <p class="doc-filename">${att.name}</p>
-            </div>`;
-        }
-        return `
-          <div class="doc-item">
-            <p class="doc-label">${att.label}</p>
-            <div class="pdf-placeholder">
-              <span>📄</span>
-              <span>${att.name}</span>
-            </div>
-            <p class="doc-filename">PDF Document</p>
-          </div>`;
-      })
-      .join("");
+    const docImages = currentReceipt.attachments.map((att) => {
+      if (isImageType(att.type)) {
+        return `<div class="doc-item"><p class="doc-label">${att.label}</p><img src="${att.dataUrl}" alt="${att.label}" class="doc-img" /><p class="doc-filename">${att.name}</p></div>`;
+      }
+      return `<div class="doc-item"><p class="doc-label">${att.label}</p><div class="pdf-placeholder"><span>📄</span><span>${att.name}</span></div><p class="doc-filename">PDF Document</p></div>`;
+    }).join("");
 
     printWindow.document.write(`
       <html><head><title>Admission Receipt - ${currentReceipt.receiptNo}</title>
@@ -163,65 +188,46 @@ const Admission = () => {
           <img src="${scholarLogo}" class="logo" alt="Logo" />
           <h1>SCHOLAR EDUCATIONAL CAMPUS</h1>
           <p class="subtitle">Admission Receipt</p>
-          <p class="contact-info">
-            📞 +91 98765 43210 &nbsp;|&nbsp; ✉ info@scholarcampus.edu<br/>
-            📍 Scholar Campus Road, Education City
-          </p>
+          <p class="contact-info">📞 +91 9503894282 &nbsp;|&nbsp; ✉ info@scholarcampus.edu<br/>📍 Scholar Campus Road, Education City</p>
         </div>
-
         <div class="row"><span class="label">Receipt No:</span><span>${currentReceipt.receiptNo}</span></div>
         <div class="row"><span class="label">Date:</span><span>${currentReceipt.date}</span></div>
         <div class="row"><span class="label">Student Name:</span><span>${currentReceipt.studentName}</span></div>
+        <div class="row"><span class="label">Mother's Name:</span><span>${currentReceipt.motherName}</span></div>
+        <div class="row"><span class="label">Date of Birth:</span><span>${currentReceipt.dateOfBirth}</span></div>
         <div class="row"><span class="label">Class:</span><span>${currentReceipt.class}</span></div>
         <div class="row"><span class="label">Address:</span><span>${currentReceipt.address}</span></div>
         <div class="row"><span class="label">Percentage:</span><span>${currentReceipt.percentage}%</span></div>
-
-        ${currentReceipt.attachments.length > 0 ? `
-          <div class="docs-section">
-            <p class="docs-title">Submitted Documents</p>
-            ${docImages}
-          </div>
-        ` : ""}
-
-        <div class="footer">
-          <p>This is a computer-generated receipt. No signature required.</p>
-          <p>Scholar Educational Campus | +91 98765 43210</p>
-        </div>
+        ${currentReceipt.attachments.length > 0 ? `<div class="docs-section"><p class="docs-title">Submitted Documents</p>${docImages}</div>` : ""}
+        <div class="footer"><p>This is a computer-generated receipt. No signature required.</p><p>Scholar Educational Campus | +91 9503894282</p></div>
       </div>
-      <script>
-        document.title = "Admission_Receipt_${currentReceipt.receiptNo}";
-        setTimeout(() => window.print(), 500);
-      <\/script>
+      <script>document.title = "Admission_Receipt_${currentReceipt.receiptNo}"; setTimeout(() => window.print(), 500);<\/script>
       </body></html>
     `);
     printWindow.document.close();
-
-    // Reset form after PDF download
     handleCancel();
   };
 
   if (receipt) {
     return (
       <Layout>
+        <FloatingActions />
         <section className="py-8 sm:py-12 md:py-16">
           <div className="container mx-auto px-3 sm:px-4 max-w-2xl">
             <div ref={receiptRef} className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-xl border-2 border-primary">
-              {/* Header with Logo */}
               <div className="text-center border-b-2 border-primary pb-3 sm:pb-4 mb-4 sm:mb-6">
                 <img src={scholarLogo} alt="Scholar Logo" className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover mx-auto mb-2" />
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">SCHOLAR EDUCATIONAL CAMPUS</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">Admission Receipt</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                  📞 +91 98765 43210 &nbsp;|&nbsp; ✉ info@scholarcampus.edu
-                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">📞 +91 9503894282 &nbsp;|&nbsp; ✉ info@scholarcampus.edu</p>
               </div>
-
-              {/* Details */}
               <div className="space-y-2 sm:space-y-3">
                 {[
                   { label: "Receipt No:", value: receipt.receiptNo },
                   { label: "Date:", value: receipt.date },
                   { label: "Student Name:", value: receipt.studentName },
+                  { label: "Mother's Name:", value: receipt.motherName },
+                  { label: "Date of Birth:", value: receipt.dateOfBirth },
                   { label: "Class:", value: receipt.class },
                   { label: "Address:", value: receipt.address },
                   { label: "Percentage:", value: `${receipt.percentage}%` },
@@ -232,23 +238,15 @@ const Admission = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Document Previews */}
               {receipt.attachments.length > 0 && (
                 <div className="mt-4 sm:mt-6">
-                  <h3 className="text-sm sm:text-base font-bold text-foreground mb-3 border-b border-primary pb-2">
-                    Submitted Documents
-                  </h3>
+                  <h3 className="text-sm sm:text-base font-bold text-foreground mb-3 border-b border-primary pb-2">Submitted Documents</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {receipt.attachments.map((att) => (
                       <div key={att.label} className="border border-border rounded-lg p-2 sm:p-3">
                         <p className="text-xs sm:text-sm font-bold text-primary mb-2">{att.label}</p>
                         {isImageType(att.type) ? (
-                          <img
-                            src={att.dataUrl}
-                            alt={att.label}
-                            className="w-full h-32 sm:h-40 object-contain rounded border border-border bg-muted/30"
-                          />
+                          <img src={att.dataUrl} alt={att.label} className="w-full h-32 sm:h-40 object-contain rounded border border-border bg-muted/30" />
                         ) : (
                           <div className="w-full h-32 sm:h-40 flex flex-col items-center justify-center rounded border border-border bg-muted/30 gap-2">
                             <FileText className="w-8 h-8 text-primary" />
@@ -261,16 +259,13 @@ const Admission = () => {
                   </div>
                 </div>
               )}
-
               <div className="text-center mt-4 sm:mt-6 text-[10px] sm:text-xs text-muted-foreground">
                 <p>This is a computer-generated receipt. No signature required.</p>
               </div>
             </div>
-
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6 justify-center">
               <Button onClick={handleDownloadPDF} className="bg-primary text-primary-foreground px-6 sm:px-8 py-2.5 sm:py-3 rounded-full btn-hover text-sm">
-                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" />
-                Download PDF
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2" /> Download PDF
               </Button>
               <Button onClick={handleCancel} variant="outline" className="border-primary text-primary px-6 sm:px-8 py-2.5 sm:py-3 rounded-full btn-hover text-sm">
                 New Admission
@@ -282,15 +277,16 @@ const Admission = () => {
     );
   }
 
+  const fieldError = (field: string) => errors[field] ? <p className="text-destructive text-[10px] sm:text-xs mt-1">{errors[field]}</p> : null;
+
   return (
     <Layout>
+      <FloatingActions />
       <section className="py-10 sm:py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
             <GraduationCap className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground animate-fade-in">
-              Admission Form
-            </h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground animate-fade-in">Admission Form</h1>
           </div>
           <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.1s" }}>
             Fill in the details below to apply for admission at Scholar Educational Campus
@@ -305,57 +301,39 @@ const Admission = () => {
               <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="studentName" className="text-xs sm:text-sm">Student Name *</Label>
-                  <Input
-                    id="studentName"
-                    name="studentName"
-                    value={formData.studentName}
-                    onChange={handleChange}
-                    placeholder="Enter student full name"
-                    required
-                    className="border-border focus:border-primary text-sm"
-                  />
+                  <Input id="studentName" name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Enter student full name" className={`border-border focus:border-primary text-sm ${errors.studentName ? 'border-destructive' : ''}`} />
+                  {fieldError("studentName")}
+                </div>
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="motherName" className="text-xs sm:text-sm">Mother's Name *</Label>
+                  <Input id="motherName" name="motherName" value={formData.motherName} onChange={handleChange} placeholder="Enter mother's full name" className={`border-border focus:border-primary text-sm ${errors.motherName ? 'border-destructive' : ''}`} />
+                  {fieldError("motherName")}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="dateOfBirth" className="text-xs sm:text-sm">Date of Birth *</Label>
+                  <Input id="dateOfBirth" name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} className={`border-border focus:border-primary text-sm ${errors.dateOfBirth ? 'border-destructive' : ''}`} />
+                  {fieldError("dateOfBirth")}
                 </div>
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="class" className="text-xs sm:text-sm">Class *</Label>
-                  <Input
-                    id="class"
-                    name="class"
-                    value={formData.class}
-                    onChange={handleChange}
-                    placeholder="Enter class (e.g., 10th, 12th)"
-                    required
-                    className="border-border focus:border-primary text-sm"
-                  />
+                  <Input id="class" name="class" value={formData.class} onChange={handleChange} placeholder="Enter class (e.g., 10th, 12th)" className={`border-border focus:border-primary text-sm ${errors.class ? 'border-destructive' : ''}`} />
+                  {fieldError("class")}
                 </div>
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="address" className="text-xs sm:text-sm">Address *</Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Enter complete address"
-                  required
-                  className="border-border focus:border-primary text-sm"
-                />
+                <Input id="address" name="address" value={formData.address} onChange={handleChange} placeholder="Enter complete address" className={`border-border focus:border-primary text-sm ${errors.address ? 'border-destructive' : ''}`} />
+                {fieldError("address")}
               </div>
 
               <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="percentage" className="text-xs sm:text-sm">Percentage *</Label>
-                <Input
-                  id="percentage"
-                  name="percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.percentage}
-                  onChange={handleChange}
-                  placeholder="Enter percentage (e.g., 85)"
-                  required
-                  className="border-border focus:border-primary text-sm"
-                />
+                <Input id="percentage" name="percentage" type="number" min="0" max="100" value={formData.percentage} onChange={handleChange} placeholder="Enter percentage (e.g., 85)" className={`border-border focus:border-primary text-sm ${errors.percentage ? 'border-destructive' : ''}`} />
+                {fieldError("percentage")}
               </div>
 
               <div className="border-t border-border pt-4 sm:pt-6">
@@ -364,20 +342,10 @@ const Admission = () => {
                   {Object.entries(fileLabels).map(([key, label]) => (
                     <div key={key} className="space-y-1.5 sm:space-y-2">
                       <Label htmlFor={key} className="text-xs sm:text-sm">{label}</Label>
-                      <Input
-                        id={key}
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => handleFileChange(e, key)}
-                        className="border-border focus:border-primary text-xs sm:text-sm"
-                      />
+                      <Input id={key} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => handleFileChange(e, key)} className="border-border focus:border-primary text-xs sm:text-sm" />
                       {files[key] && (
                         <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-green-600">
-                          {files[key]!.type.startsWith("image/") ? (
-                            <ImageIcon className="w-3 h-3" />
-                          ) : (
-                            <FileText className="w-3 h-3" />
-                          )}
+                          {files[key]!.type.startsWith("image/") ? <ImageIcon className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
                           <span className="truncate">{files[key]!.name}</span>
                         </div>
                       )}
@@ -387,11 +355,7 @@ const Admission = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 btn-hover bg-primary text-primary-foreground py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg rounded-full"
-                >
+                <Button type="submit" disabled={isSubmitting} className="flex-1 btn-hover bg-primary text-primary-foreground py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg rounded-full">
                   {isSubmitting ? "Processing..." : "Submit Application"}
                 </Button>
                 <Button type="button" onClick={handleCancel} variant="outline" className="flex-1 border-primary text-primary py-4 sm:py-5 md:py-6 text-sm sm:text-base md:text-lg rounded-full btn-hover">
