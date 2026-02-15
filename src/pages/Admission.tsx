@@ -41,6 +41,7 @@ const Admission = () => {
   const [formData, setFormData] = useState({
     studentName: "",
     motherName: "",
+    mobileNumber: "",
     dateOfBirth: "",
     class: "",
     address: "",
@@ -84,6 +85,9 @@ const Admission = () => {
 
     if (!formData.motherName.trim()) newErrors.motherName = "Mother's name is required";
     else if (formData.motherName.trim().length < 2) newErrors.motherName = "Name must be at least 2 characters";
+
+    if (!formData.mobileNumber.trim()) newErrors.mobileNumber = "Mobile number is required";
+    else if (!/^[0-9]{10,15}$/.test(formData.mobileNumber.trim())) newErrors.mobileNumber = "Enter a valid 10-15 digit mobile number";
 
     if (!formData.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
     else {
@@ -153,7 +157,7 @@ const Admission = () => {
   };
 
   const handleCancel = () => {
-    setFormData({ studentName: "", motherName: "", dateOfBirth: "", class: "", address: "", percentage: "" });
+    setFormData({ studentName: "", motherName: "", mobileNumber: "", dateOfBirth: "", class: "", address: "", percentage: "" });
     setFiles({ aadharCard: null, birthCertificate: null, marksheet: null, fatherAadhar: null, motherAadhar: null });
     setErrors({});
     setReceipt(null);
@@ -323,6 +327,12 @@ const Admission = () => {
                   <Input id="motherName" name="motherName" value={formData.motherName} onChange={handleChange} placeholder="Enter mother's full name" className={`border-border focus:border-primary text-sm ${errors.motherName ? 'border-destructive' : ''}`} />
                   {fieldError("motherName")}
                 </div>
+              </div>
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="mobileNumber" className="text-xs sm:text-sm">Mobile Number *</Label>
+                <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber} onChange={handleChange} placeholder="Enter 10-digit mobile number" className={`border-border focus:border-primary text-sm ${errors.mobileNumber ? 'border-destructive' : ''}`} />
+                {fieldError("mobileNumber")}
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
