@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
 import scholarLogo from "@/assets/scholar-logo.jpg";
+import axios from "@/lib/axios";
 
 interface AttachmentData {
   name: string;
@@ -122,6 +123,15 @@ const Admission = () => {
           attachments.push({ name: file.name, label: fileLabels[key], dataUrl, type: file.type });
         }
       }
+
+      // Try sending data to backend API (non-blocking)
+      const payload = { ...formData, attachments };
+      try {
+        await axios.post("/admissions", payload);
+      } catch (apiErr) {
+        console.warn("Backend API not available, continuing with local receipt:", apiErr);
+      }
+
       setReceipt({
         studentName: formData.studentName,
         motherName: formData.motherName,
@@ -133,6 +143,10 @@ const Admission = () => {
         date: new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }),
         attachments,
       });
+      toast.success("Admission submitted successfully!");
+    } catch (err) {
+      console.error("Admission error:", err);
+      toast.error("Failed to process admission. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
