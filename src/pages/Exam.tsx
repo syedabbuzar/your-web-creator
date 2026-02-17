@@ -1,5 +1,5 @@
 import Layout from "@/components/Layout";
-import { FileText, Calendar, Download, Clock, BookOpen, AlertCircle, Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { FileText, Calendar, Download, Clock, BookOpen, AlertCircle, Plus, Pencil, Trash2, Upload, Loader2, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ const Exam = () => {
   const [examSchedule, setExamSchedule] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
+  const [attachments, setAttachments] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
 
   // Schedule dialog
@@ -35,6 +36,11 @@ const Exam = () => {
   const [resultDialog, setResultDialog] = useState(false);
   const [editingResult, setEditingResult] = useState<any>(null);
   const [resultForm, setResultForm] = useState({ title: "", description: "", status: "upcoming", result_date: "" });
+
+  // PDF attachments for result dialog
+  const [pdfFiles, setPdfFiles] = useState<File[]>([]);
+  const [uploadingPdfs, setUploadingPdfs] = useState(false);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   // Resource dialog
   const [resourceDialog, setResourceDialog] = useState(false);
@@ -54,6 +60,22 @@ const Exam = () => {
     setResults(resRes.data || []);
     setResources(resourcesRes.data || []);
     setLoading(false);
+
+    // Fetch attachments for all results
+    if (resRes.data && resRes.data.length > 0) {
+      const { data: allAttachments } = await supabase
+        .from("exam_result_attachments" as any)
+        .select("*")
+        .order("created_at");
+      if (allAttachments) {
+        const grouped: Record<string, any[]> = {};
+        (allAttachments as any[]).forEach((att: any) => {
+          if (!grouped[att.result_id]) grouped[att.result_id] = [];
+          grouped[att.result_id].push(att);
+        });
+        setAttachments(grouped);
+      }
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -94,31 +116,73 @@ const Exam = () => {
   const openAddResult = () => {
     setEditingResult(null);
     setResultForm({ title: "", description: "", status: "upcoming", result_date: "" });
+    setPdfFiles([]);
     setResultDialog(true);
   };
   const openEditResult = (r: any) => {
     setEditingResult(r);
     setResultForm({ title: r.title, description: r.description, status: r.status, result_date: r.result_date || "" });
+    setPdfFiles([]);
     setResultDialog(true);
   };
+
+  const uploadPdfToStorage = async (file: File): Promise<string> => {
+    const ext = file.name.split('.').pop();
+    const fileName = `results/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+    const { error } = await supabase.storage.from("exam-resources").upload(fileName, file);
+    if (error) throw error;
+    const { data } = supabase.storage.from("exam-resources").getPublicUrl(fileName);
+    return data.publicUrl;
+  };
+
   const saveResult = async () => {
     if (!resultForm.title) return toast.error("Title required");
-    if (editingResult) {
-      const { error } = await supabase.from("exam_results").update({ ...resultForm, result_date: resultForm.result_date || null }).eq("id", editingResult.id);
-      if (error) return toast.error("Update failed");
-      toast.success("Result updated!");
-    } else {
-      const { error } = await supabase.from("exam_results").insert({ ...resultForm, result_date: resultForm.result_date || null, sort_order: results.length + 1 });
-      if (error) return toast.error("Add failed");
-      toast.success("Result added!");
+    setUploadingPdfs(true);
+    try {
+      let resultId = editingResult?.id;
+      if (editingResult) {
+        const { error } = await supabase.from("exam_results").update({ ...resultForm, result_date: resultForm.result_date || null }).eq("id", editingResult.id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("exam_results").insert({ ...resultForm, result_date: resultForm.result_date || null, sort_order: results.length + 1 }).select("id").single();
+        if (error) throw error;
+        resultId = data.id;
+      }
+
+      // Upload PDF attachments
+      if (pdfFiles.length > 0 && resultId) {
+        for (const file of pdfFiles) {
+          const fileUrl = await uploadPdfToStorage(file);
+          const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+          await supabase.from("exam_result_attachments" as any).insert({
+            result_id: resultId,
+            file_name: file.name,
+            file_url: fileUrl,
+            file_size: `${sizeMB} MB`,
+          } as any);
+        }
+      }
+
+      toast.success(editingResult ? "Result updated!" : "Result added!");
+      setResultDialog(false);
+      fetchData();
+    } catch {
+      toast.error("Failed to save result");
     }
-    setResultDialog(false);
-    fetchData();
+    setUploadingPdfs(false);
   };
+
   const deleteResult = async (id: string) => {
     const { error } = await supabase.from("exam_results").delete().eq("id", id);
     if (error) return toast.error("Delete failed");
     toast.success("Result removed!");
+    fetchData();
+  };
+
+  const deleteAttachment = async (attId: string) => {
+    const { error } = await supabase.from("exam_result_attachments" as any).delete().eq("id", attId);
+    if (error) return toast.error("Delete failed");
+    toast.success("Attachment removed!");
     fetchData();
   };
 
@@ -292,7 +356,7 @@ const Exam = () => {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
             {results.map((result, index) => (
-              <div key={result.id} className="bg-card p-4 sm:p-6 rounded-lg shadow-lg text-center animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
+              <div key={result.id} className="bg-card p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
                 {isAdmin && (
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => openEditResult(result)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary"><Pencil className="w-3.5 h-3.5 text-primary" /></button>
@@ -300,12 +364,40 @@ const Exam = () => {
                   </div>
                 )}
                 <Clock className="w-10 h-10 sm:w-12 sm:h-12 text-primary mx-auto mb-3 animate-float" />
-                <h3 className="text-base sm:text-lg font-bold text-foreground mb-2">{result.title}</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-2">{result.description}</p>
-                {result.result_date && <p className="text-xs text-primary font-medium">{result.result_date}</p>}
-                <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${result.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                  {result.status === 'published' ? 'Published' : 'Upcoming'}
-                </span>
+                <h3 className="text-base sm:text-lg font-bold text-foreground mb-2 text-center">{result.title}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2 text-center">{result.description}</p>
+                {result.result_date && <p className="text-xs text-primary font-medium text-center">{result.result_date}</p>}
+                <div className="text-center">
+                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${result.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    {result.status === 'published' ? 'Published' : 'Upcoming'}
+                  </span>
+                </div>
+
+                {/* PDF Attachments List */}
+                {attachments[result.id] && attachments[result.id].length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border space-y-1.5">
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Paperclip className="w-3 h-3" /> Attachments
+                    </p>
+                    {attachments[result.id].map((att: any) => (
+                      <div key={att.id} className="flex items-center justify-between bg-secondary/50 rounded px-2 py-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <FileText className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                          <span className="text-[10px] sm:text-xs text-foreground truncate">{att.file_name}</span>
+                          <span className="text-[9px] sm:text-[10px] text-muted-foreground flex-shrink-0">{att.file_size}</span>
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          <a href={att.file_url} target="_blank" rel="noopener noreferrer" download>
+                            <button className="p-1 hover:bg-primary/10 rounded"><Download className="w-3 h-3 text-primary" /></button>
+                          </a>
+                          {isAdmin && (
+                            <button onClick={() => deleteAttachment(att.id)} className="p-1 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -396,9 +488,9 @@ const Exam = () => {
 
       {/* Result Dialog */}
       <Dialog open={resultDialog} onOpenChange={setResultDialog}>
-        <DialogContent className="mx-4 max-w-md">
+        <DialogContent className="mx-4 max-w-md sm:max-w-lg">
           <DialogHeader><DialogTitle className="text-base sm:text-lg">{editingResult ? "Edit Result" : "Add Result"}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto">
             <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Title *</Label><Input value={resultForm.title} onChange={e => setResultForm({ ...resultForm, title: e.target.value })} placeholder="e.g. First Term Results" className="text-sm" /></div>
             <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Description</Label><Textarea value={resultForm.description} onChange={e => setResultForm({ ...resultForm, description: e.target.value })} placeholder="Description" className="text-sm" /></div>
             <div className="grid grid-cols-2 gap-3">
@@ -411,7 +503,56 @@ const Exam = () => {
                 </select>
               </div>
             </div>
-            <Button onClick={saveResult} className="w-full bg-primary text-primary-foreground text-sm">{editingResult ? "Update" : "Add"}</Button>
+
+            {/* PDF Attachment Upload */}
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">PDF Attachments</Label>
+              <input
+                ref={pdfInputRef}
+                type="file"
+                accept=".pdf"
+                multiple
+                className="hidden"
+                onChange={e => {
+                  if (e.target.files) setPdfFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                  e.target.value = "";
+                }}
+              />
+              <Button type="button" variant="outline" onClick={() => pdfInputRef.current?.click()} className="w-full text-sm">
+                <Upload className="w-4 h-4 mr-2" /> Add PDF Files
+              </Button>
+              {pdfFiles.length > 0 && (
+                <div className="space-y-1 mt-2">
+                  {pdfFiles.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between bg-secondary/50 rounded px-2 py-1.5">
+                      <span className="text-xs text-foreground truncate">{f.name}</span>
+                      <button onClick={() => setPdfFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-0.5 hover:bg-destructive/10 rounded">
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Existing attachments when editing */}
+              {editingResult && attachments[editingResult.id] && attachments[editingResult.id].length > 0 && (
+                <div className="space-y-1 mt-2">
+                  <p className="text-[10px] text-muted-foreground">Existing attachments:</p>
+                  {attachments[editingResult.id].map((att: any) => (
+                    <div key={att.id} className="flex items-center justify-between bg-secondary/30 rounded px-2 py-1.5">
+                      <span className="text-xs text-foreground truncate">{att.file_name}</span>
+                      <button onClick={() => deleteAttachment(att.id)} className="p-0.5 hover:bg-destructive/10 rounded">
+                        <Trash2 className="w-3 h-3 text-destructive" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Button onClick={saveResult} disabled={uploadingPdfs} className="w-full bg-primary text-primary-foreground text-sm">
+              {uploadingPdfs ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading...</> : editingResult ? "Update" : "Add"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

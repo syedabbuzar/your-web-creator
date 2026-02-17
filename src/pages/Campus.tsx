@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import ImageUploadButton from "@/components/ImageUploadButton";
 
 const iconMap: Record<string, any> = {
   Book, Beaker, Monitor, Dumbbell, Music, Trees, Utensils, Building,
@@ -107,6 +108,14 @@ const Campus = () => {
     fetchData();
   };
 
+  const handleAddMultipleGalleryImages = async (urls: string[]) => {
+    for (const url of urls) {
+      await supabase.from("gallery").insert({ src: url, alt: "Uploaded Image", sort_order: gallery.length + 1 });
+    }
+    toast.success(`${urls.length} images added to gallery!`);
+    fetchData();
+  };
+
   const handleDeleteGallery = async (id: string) => {
     const { error } = await supabase.from("gallery").delete().eq("id", id);
     if (error) return toast.error("Failed to delete");
@@ -192,9 +201,17 @@ const Campus = () => {
               Campus Gallery
             </h2>
             {isAdmin && (
-              <Button onClick={openAddGallery} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm">
-                <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add Image
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={openAddGallery} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm">
+                  <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add Image
+                </Button>
+                <ImageUploadButton
+                  onUpload={() => {}}
+                  multiple
+                  onMultiUpload={handleAddMultipleGalleryImages}
+                  label="Upload Multiple"
+                />
+              </div>
             )}
           </div>
           <p className="text-xs sm:text-sm md:text-base text-muted-foreground text-center mb-6 sm:mb-8 md:mb-12 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
@@ -289,8 +306,11 @@ const Campus = () => {
           </DialogHeader>
           <div className="space-y-3 sm:space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs sm:text-sm">Image URL *</Label>
-              <Input value={galleryForm.src} onChange={(e) => setGalleryForm({ ...galleryForm, src: e.target.value })} placeholder="https://..." className="text-sm" />
+              <Label className="text-xs sm:text-sm">Image</Label>
+              <div className="flex gap-2">
+                <Input value={galleryForm.src} onChange={(e) => setGalleryForm({ ...galleryForm, src: e.target.value })} placeholder="Image URL" className="text-sm flex-1" />
+                <ImageUploadButton onUpload={(url) => setGalleryForm({ ...galleryForm, src: url })} label="Upload" />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs sm:text-sm">Title *</Label>

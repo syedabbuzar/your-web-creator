@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import ImageUploadButton from "@/components/ImageUploadButton";
 
 const defaultCategories = ["All", "Conference", "Cultural", "Workshop", "Academic", "Teachers Achievement", "Job Vacancy"];
 
@@ -194,7 +195,18 @@ const Events = () => {
                 </select>
               </div>
             </div>
-            <div className="space-y-1.5 sm:space-y-2"><Label className="text-xs sm:text-sm">Image URL</Label><Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Image URL (optional)" className="text-sm" /></div>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Image</Label>
+              <div className="flex gap-2">
+                <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Image URL (optional)" className="text-sm flex-1" />
+                <ImageUploadButton onUpload={(url) => setForm({ ...form, image: url })} label="Upload" />
+              </div>
+              {form.image && (
+                <div className="rounded-md overflow-hidden border border-border mt-1">
+                  <img src={form.image} alt="Preview" className="w-full h-24 object-cover" />
+                </div>
+              )}
+            </div>
             <Button onClick={handleSave} className="w-full bg-primary text-primary-foreground text-sm">{editingEvent ? "Update" : "Add"}</Button>
           </div>
         </DialogContent>
