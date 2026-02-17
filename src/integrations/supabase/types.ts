@@ -80,6 +80,41 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_result_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: string
+          file_url: string
+          id: string
+          result_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: string
+          file_url: string
+          id?: string
+          result_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: string
+          file_url?: string
+          id?: string
+          result_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_result_attachments_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "exam_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_results: {
         Row: {
           created_at: string

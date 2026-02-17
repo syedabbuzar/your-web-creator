@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import ImageUploadButton from "@/components/ImageUploadButton";
 
 const values = [
   { icon: Target, title: "Truth", description: "We pursue knowledge with honesty and integrity in all our endeavors." },
@@ -220,8 +221,16 @@ const About = () => {
               <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Enter role" className="text-sm" />
             </div>
             <div className="space-y-1.5 sm:space-y-2">
-              <Label className="text-xs sm:text-sm">Image URL</Label>
-              <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Enter image URL (optional)" className="text-sm" />
+              <Label className="text-xs sm:text-sm">Image</Label>
+              <div className="flex gap-2">
+                <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Image URL (optional)" className="text-sm flex-1" />
+                <ImageUploadButton onUpload={(url) => setForm({ ...form, image: url })} label="Upload" />
+              </div>
+              {form.image && (
+                <div className="w-16 h-16 rounded-full overflow-hidden border border-border mx-auto mt-2">
+                  <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
             <Button onClick={handleSave} className="w-full bg-primary text-primary-foreground text-sm">{editingLeader ? "Update" : "Add"}</Button>
           </div>
