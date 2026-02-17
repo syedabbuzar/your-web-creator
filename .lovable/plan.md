@@ -1,94 +1,75 @@
 
 
-# Scholar Educational Campus Website - Implementation Plan
+## Plan: Exam Result PDF Attachments + Multiple Image Upload
 
-## Overview
-I'll create an exact replica of the Scholar Educational Campus website using **React.js (ES6 arrow functions)** and **Tailwind CSS** with animations and hover effects.
+### Part 1: Exam Result mein PDF Attachment Feature
 
----
+**Kya hoga:**
+- Jab admin result add/edit kare, toh waha PDF files upload kar sake
+- Ek result ke saath multiple PDFs attach ho sakein
+- Published results ke neeche PDF list show hogi with download button
+- Storage bucket `exam-resources` (already exists) use hoga
 
-## Design Specifications (Exact Colors)
-- **Background Color:** Cream/Beige (#f5f0e8)
-- **Primary Text Color:** Dark Maroon (#8B0000)
-- **Button Color:** Dark Red/Maroon (#8B0000)
-- **Accent Text:** Maroon with different shades
+**Database Changes:**
+- Naya table `exam_result_attachments` banegi:
+  - `id` (uuid, primary key)
+  - `result_id` (uuid, foreign key to exam_results)
+  - `file_name` (text)
+  - `file_url` (text)
+  - `file_size` (text)
+  - `created_at` (timestamp)
+- Public RLS policies (existing pattern follow karenge)
 
----
-
-## Navigation Bar (Modified as per your request)
-- **Logo** on the LEFT side (BIGGER size)
-- **Title "SCHOLAR EDUCATIONAL CAMPUS"** next to the logo
-- **Menu items:** Home | Events | About Us | Campus | Exam
-- **Contact Us** button (dark maroon) on the right
-- **Hover effects** on all navigation links
-- **Sticky navigation** on scroll
-
----
-
-## Pages to Create
-
-### 1. **Home Page**
-- Hero section with inspirational quote: *"At Scholar Campus, we are committed to shaping a better world through better education."*
-- VERITAS motto description
-- "EXPLORE MORE" button with hover animation
-- Events/News cards section (3 cards):
-  - Educational Expo & Conference
-  - Glimpse of Urooj 2025
-  - POCSO Act 2012 Awareness Workshop
-
-### 2. **Events Page**
-- List of all school events
-- Event cards with images, dates, and descriptions
-- Filter/category options
-
-### 3. **About Us Page**
-- School history and mission
-- VERITAS philosophy explanation
-- Vision and values section
-- Leadership/Management team
-
-### 4. **Campus Page**
-- Campus facilities showcase
-- Image gallery of campus
-- Infrastructure details
-- Virtual tour section
-
-### 5. **Exam Page**
-- Exam schedules and information
-- Result announcements section
-- Exam guidelines
-- Download resources section
-
-### 6. **Contact Us Page**
-- Contact form (Name, Email, Phone, Message)
-- School address and map
-- Phone numbers and email
-- Working hours
+**UI Changes (Exam.tsx):**
+- Result dialog mein PDF upload section add hoga (multiple files)
+- Result card ke neeche attached PDFs ki list show hogi with download icons
+- Admin delete kar sake individual attachments
 
 ---
 
-## Animations & Hover Effects
-- **Fade-in animations** on page load for sections
-- **Scale hover effect** on cards and buttons
-- **Underline animation** on navigation links
-- **Smooth scroll** for page navigation
-- **Button glow/shadow** effect on hover
-- **Image zoom effect** on event cards
-- **Slide-in animations** for content sections
+### Part 2: Multiple Image Upload (Device se Upload)
+
+**Kya hoga:**
+- Jaha bhi admin images add karta hai (Leaders, Gallery, Events), waha device se file upload ka option milega (URL ke saath)
+- Images storage bucket mein upload hongi
+- Multiple images ek saath select kar sake
+
+**Database/Storage Changes:**
+- Naya storage bucket `site-images` banegi for general image uploads
+- Public bucket hogi taaki images website pe show ho sakein
+
+**UI Changes:**
+- **About.tsx (Leaders)**: Image URL field ke saath ek "Upload Image" button bhi hoga
+- **Campus.tsx (Gallery)**: Image URL field ke saath "Upload Image" button + multiple images ek saath upload kar sake
+- **Events page**: Event form mein bhi image upload option
 
 ---
 
-## Components to Build
-1. **Navbar** - Responsive with mobile menu
-2. **Hero Section** - With animated text
-3. **Event Cards** - With hover effects
-4. **Footer** - With social links and contact info
-5. **Page layouts** - Consistent across all pages
+### Technical Details
 
----
+**New Database Table:**
+```sql
+CREATE TABLE exam_result_attachments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  result_id UUID REFERENCES exam_results(id) ON DELETE CASCADE,
+  file_name TEXT NOT NULL,
+  file_url TEXT NOT NULL,
+  file_size TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+-- RLS policies (public read/insert/update/delete)
+-- Storage bucket for site images
+```
 
-## Mobile Responsive
-- Hamburger menu for mobile
-- Stacked cards on smaller screens
-- Responsive typography and spacing
+**Files Modified:**
+1. `src/pages/Exam.tsx` - Result dialog mein PDF upload + result card pe PDF list
+2. `src/pages/About.tsx` - Leader form mein image upload button
+3. `src/pages/Campus.tsx` - Gallery form mein image upload button + multi-select
+4. Common upload helper reuse karenge (already exists in Exam.tsx)
+
+**Upload Flow:**
+1. Admin file select kare (device se)
+2. File storage bucket mein upload ho
+3. Public URL milegi
+4. URL database mein save hogi
 
