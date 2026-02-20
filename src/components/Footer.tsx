@@ -48,15 +48,15 @@ const Footer = () => {
             <ul className="space-y-2 sm:space-y-3">
               <li className="flex items-start gap-2 text-xs sm:text-sm opacity-80">
                 <MapPin size={16} className="mt-0.5 flex-shrink-0" />
-                <span>123 Education Lane, Knowledge City, State - 123456</span>
+                <span>Hyd road, Near old bridge Wajegaon, dist Nanded </span>
               </li>
               <li className="flex items-center gap-2 text-xs sm:text-sm opacity-80">
                 <Phone size={16} className="flex-shrink-0" />
-                <span>+91 98765 43210</span>
+                <span>+91 9503834282 </span>
               </li>
               <li className="flex items-center gap-2 text-xs sm:text-sm opacity-80">
                 <Mail size={16} className="flex-shrink-0" />
-                <span>info@scholarcampus.edu</span>
+                <span>scholaries4282@gmail.com</span>
               </li>
             </ul>
           </div>
@@ -81,10 +81,10 @@ const Footer = () => {
                 </a>
               ))}
             </div>
-            <div className="mt-4 sm:mt-6">
+            {/* <div className="mt-4 sm:mt-6">
               <p className="text-xs sm:text-sm opacity-80 mb-1 sm:mb-2">Working Hours:</p>
               <p className="text-xs sm:text-sm">Mon - Sat: 8:00 AM - 5:00 PM</p>
-            </div>
+            </div> */}
           </div>
         </div>
 

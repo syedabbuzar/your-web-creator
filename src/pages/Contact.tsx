@@ -9,9 +9,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const contactInfo = [
-  { icon: MapPin, title: "Address", content: "123 Education Lane, Knowledge City, State - 123456" },
-  { icon: Phone, title: "Phone", content: "+91 98765 43210" },
-  { icon: Mail, title: "Email", content: "info@scholarcampus.edu" },
+  { icon: MapPin, title: "Address", content: "Hyd road, Near old bridge Wajegaon, dist Nanded" },
+  { icon: Phone, title: "Phone", content: "+91 95038 34282" },
+  { icon: Mail, title: "Email", content: "scholaries4282@gmail.com" },
   { icon: Clock, title: "Working Hours", content: "Mon - Sat: 8:00 AM - 5:00 PM" },
 ];
 

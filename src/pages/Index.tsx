@@ -9,10 +9,10 @@ import { ArrowRight, BookOpen, Users, Award, GraduationCap } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 
 const stats = [
-  { icon: Users, value: "5000+", label: "Students" },
-  { icon: GraduationCap, value: "200+", label: "Faculty" },
+  //{ icon: Users, value: "5000+", label: "Students" },
+  { icon: GraduationCap, value: "50+", label: "Faculty" },
   { icon: Award, value: "50+", label: "Awards" },
-  { icon: BookOpen, value: "25+", label: "Years" },
+  { icon: BookOpen, value: "12+", label: "Years" },
 ];
 
 const Index = () => {
@@ -45,6 +45,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto">
             <h2 className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground uppercase tracking-widest mb-3 sm:mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               Welcome to Scholar Campus
+                 Nursery To 12th Grade 
             </h2>
             <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground leading-tight mb-4 sm:mb-6 md:mb-8 animate-fade-in-up font-serif px-2" style={{ animationDelay: "0.3s" }}>
               "At Scholar Campus, we are committed to{" "}
@@ -71,7 +72,7 @@ const Index = () => {
       {/* Stats Section */}
       <section className="py-8 sm:py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {stats.map((stat, index) => (
               <div key={stat.label} className="text-center animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
                 <stat.icon className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mx-auto mb-2 sm:mb-3" />
