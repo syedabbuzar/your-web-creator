@@ -1,5 +1,6 @@
 import Layout from "@/components/Layout";
-import { Users, Target, Eye, Heart, Award, BookOpen, Plus, Pencil, Trash2 } from "lucide-react";
+import { Users, Target, Eye, Heart, Award, BookOpen, Plus, Pencil, Trash2, Shield, Crown, Globe, BookOpenCheck, PenTool } from "lucide-react";
+import scholarEmblem from "@/assets/scholar-emblem.jpg";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -116,14 +117,71 @@ const About = () => {
         </div>
       </section>
 
+      {/* Our Emblem Section */}
+      <section className="py-10 sm:py-14 md:py-20 bg-secondary/30">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
+            <div className="flex justify-center animate-slide-in-left">
+              <img src={scholarEmblem} alt="Scholar Educational Campus Emblem" className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain rounded-2xl shadow-xl" />
+            </div>
+            <div className="animate-slide-in-right">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-4 sm:mb-6">Our Emblem</h2>
+              <p className="text-sm sm:text-base text-muted-foreground mb-4 leading-relaxed italic">
+                Our emblem is more than just a picture; it tells the story of how we care for your child.
+              </p>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Shield</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Just like a shield protects a soldier, we protect and care for your child's growing mind.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Award className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Lions</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">These represent strength and character. We teach children to be brave, respectful, and disciplined.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <BookOpenCheck className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Open Books</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">This means learning is a joy. We want children to be curious and truly understand what they learn, not just memorize it.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Globe</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">We prepare our students to be successful anywhere in the world while staying connected to their roots.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <PenTool className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Pen & Crown</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">The pen at the top shows that clear thinking and honest words are the keys to becoming a true leader.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* VERITAS Section */}
       <section className="py-10 sm:py-14 md:py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 animate-fade-in font-serif">VERITAS</h2>
-          <p className="text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 opacity-90 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>Truth • Knowledge • Excellence</p>
+          <p className="text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 opacity-90 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>Our Motto: Truth</p>
           <div className="max-w-3xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.2s" }}>
-            <p className="text-sm sm:text-base md:text-lg leading-relaxed opacity-90">
-              VERITAS, Latin for "Truth," is the cornerstone of our educational philosophy. We believe that the pursuit of truth through knowledge leads to excellence in all aspects of life.
+            <p className="text-sm sm:text-base md:text-lg leading-relaxed opacity-90 mb-4">
+              At Scholar Educational Campus, "Veritas" means we are honest and sincere in everything we do—from how we teach to how we nurture your child.
+            </p>
+            <p className="text-sm sm:text-base md:text-lg leading-relaxed opacity-90 font-semibold">
+              We don't just prepare students for exams; we prepare them for life.
             </p>
           </div>
         </div>

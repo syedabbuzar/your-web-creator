@@ -196,7 +196,7 @@ const Events = () => {
               </div>
             </div>
             <div className="space-y-1.5 sm:space-y-2">
-              <Label className="text-xs sm:text-sm">Image</Label>
+              <Label className="text-xs sm:text-sm">Main Image</Label>
               <div className="flex gap-2">
                 <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="Image URL (optional)" className="text-sm flex-1" />
                 <ImageUploadButton onUpload={(url) => setForm({ ...form, image: url })} label="Upload" />
@@ -206,6 +206,27 @@ const Events = () => {
                   <img src={form.image} alt="Preview" className="w-full h-24 object-cover" />
                 </div>
               )}
+            </div>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Additional Images</Label>
+              <ImageUploadButton
+                onUpload={() => {}}
+                multiple={true}
+                onMultiUpload={async (urls) => {
+                  if (!editingEvent) {
+                    toast.info("Save the event first, then add additional images by editing it.");
+                    return;
+                  }
+                  for (const url of urls) {
+                    await supabase.from("event_images").insert({ event_id: editingEvent.id, image_url: url });
+                  }
+                  toast.success(`${urls.length} image(s) added!`);
+                }}
+                label="Upload Multiple Images"
+              />
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                {editingEvent ? "Upload additional images for this event" : "Save the event first, then edit to add more images"}
+              </p>
             </div>
             <Button onClick={handleSave} className="w-full bg-primary text-primary-foreground text-sm">{editingEvent ? "Update" : "Add"}</Button>
           </div>
