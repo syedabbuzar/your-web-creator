@@ -9,7 +9,7 @@ import { ArrowRight, BookOpen, Users, Award, GraduationCap } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 
 const stats = [
-  //{ icon: Users, value: "5000+", label: "Students" },
+  //{ icon: Users, value: "5000+", label: "classroom" },
   { icon: GraduationCap, value: "50+", label: "Faculty" },
   { icon: Award, value: "50+", label: "Awards" },
   { icon: BookOpen, value: "12+", label: "Years" },
@@ -44,11 +44,11 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground uppercase tracking-widest mb-3 sm:mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Welcome to Scholar Campus
+              Welcome to Scholar Educational Campus
                  Nursery To 12th Grade 
             </h2>
             <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground leading-tight mb-4 sm:mb-6 md:mb-8 animate-fade-in-up font-serif px-2" style={{ animationDelay: "0.3s" }}>
-              "At Scholar Campus, we are committed to{" "}
+              "At Scholar Educational Campus, we are committed to{" "}
               <span className="text-accent">shaping a better world</span> through better education."
             </h1>
             <div className="animate-fade-in-up" style={{ animationDelay: "0.5s" }}>

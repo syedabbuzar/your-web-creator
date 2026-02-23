@@ -52,11 +52,11 @@ const Navbar = () => {
               className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full object-cover transition-transform duration-300 group-hover:scale-110"
             />
             <div>
-              <h1 className="text-[10px] sm:text-sm md:text-lg lg:text-xl xl:text-2xl font-bold text-foreground tracking-wide leading-tight whitespace-nowrap">
-                SCHOLAR EDUCATIONAL
+              <h1 className=" text-[12px] sm:text-sm md:text-lg lg:text-xl xl:text-3xl font-bold text-foreground tracking-wide leading-tight whitespace-nowrap">
+                SCHOLAR 
               </h1>
               <p className="text-[8px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-foreground/80 tracking-widest font-medium">
-                CAMPUS
+                 EDUCATIONAL CAMPUS 
               </p>
             </div>
           </Link>
