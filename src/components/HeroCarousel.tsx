@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import OptimizedImage from "@/components/OptimizedImage";
 
 const HeroCarousel = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -43,7 +44,12 @@ const HeroCarousel = () => {
             index === current ? "opacity-100 z-10" : "opacity-0 z-0"
           }`}
         >
-          <img src={event.image} alt={event.title} className="w-full h-full object-cover object-center" loading="eager" />
+          <OptimizedImage
+            src={event.image}
+            alt={event.title}
+            className="w-full h-full object-cover object-center"
+            loading={index === 0 ? "eager" : "lazy"}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-4 sm:left-6 md:left-8 right-4 sm:right-6 md:right-8 z-20">
             <p className="text-[10px] sm:text-xs md:text-sm text-white/80 uppercase tracking-wider mb-1 sm:mb-2">{event.date}</p>

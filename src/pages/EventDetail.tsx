@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import OptimizedImage from "@/components/OptimizedImage";
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -64,11 +65,12 @@ const EventDetail = () => {
       <section className="relative">
         <div className="w-full h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden relative">
           {images.map((img, idx) => (
-            <img
+            <OptimizedImage
               key={idx}
               src={img}
               alt={`${event.title} - ${idx + 1}`}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${idx === currentImg ? "opacity-100" : "opacity-0"}`}
+              loading={idx === 0 ? "eager" : "lazy"}
             />
           ))}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
@@ -135,7 +137,7 @@ const EventDetail = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {images.map((img, idx) => (
                   <button key={idx} onClick={() => { setCurrentImg(idx); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`rounded-lg overflow-hidden border-2 transition-all ${idx === currentImg ? "border-primary" : "border-transparent"}`}>
-                    <img src={img} alt={`${event.title} ${idx + 1}`} className="w-full h-24 sm:h-32 object-cover" />
+                    <OptimizedImage src={img} alt={`${event.title} ${idx + 1}`} className="w-full h-24 sm:h-32 object-cover" />
                   </button>
                 ))}
               </div>

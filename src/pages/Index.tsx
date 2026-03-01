@@ -9,10 +9,10 @@ import { ArrowRight, BookOpen, Users, Award, GraduationCap } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 
 const stats = [
-  //{ icon: Users, value: "5000+", label: "classroom" },
   { icon: GraduationCap, value: "50+", label: "Faculty" },
   { icon: Award, value: "50+", label: "Awards" },
   { icon: BookOpen, value: "12+", label: "Years" },
+  { icon: Users, value: "10+", label: "Smart Class" },
 ];
 
 const Index = () => {
@@ -57,12 +57,24 @@ const Index = () => {
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">Truth • Knowledge • Excellence</p>
               </div>
             </div>
-            <Link to="/about" className="animate-fade-in-up inline-block" style={{ animationDelay: "0.7s" }}>
-              <Button className="btn-hover bg-primary text-primary-foreground text-sm sm:text-base md:text-lg px-6 sm:px-8 py-4 sm:py-5 md:py-6 rounded-full font-semibold group">
-                EXPLORE MORE
-                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in-up" style={{ animationDelay: "0.7s" }}>
+              <Link to="/about">
+                <Button className="btn-hover bg-primary text-primary-foreground text-sm sm:text-base md:text-lg px-6 sm:px-8 py-4 sm:py-5 md:py-6 rounded-full font-semibold group">
+                  EXPLORE MORE
+                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link to="/quiz">
+                <Button variant="outline" className="btn-hover border-primary text-primary hover:bg-primary hover:text-primary-foreground text-sm sm:text-base md:text-lg px-6 sm:px-8 py-4 sm:py-5 md:py-6 rounded-full font-semibold group">
+                  🎓 APPLY SCHOLARSHIP
+                </Button>
+              </Link>
+              <Link to="/admission">
+                <Button className="btn-hover bg-accent text-accent-foreground text-sm sm:text-base md:text-lg px-6 sm:px-8 py-4 sm:py-5 md:py-6 rounded-full font-semibold group">
+                  📝 ADMISSION
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -72,7 +84,7 @@ const Index = () => {
       {/* Stats Section */}
       <section className="py-8 sm:py-12 md:py-16 bg-secondary/30">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {stats.map((stat, index) => (
               <div key={stat.label} className="text-center animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
                 <stat.icon className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mx-auto mb-2 sm:mb-3" />

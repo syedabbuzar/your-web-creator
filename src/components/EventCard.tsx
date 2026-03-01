@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import OptimizedImage from "@/components/OptimizedImage";
 
 interface EventCardProps {
   id?: string;
@@ -21,10 +22,11 @@ const EventCard = ({ id, title, description, date, image, className, style }: Ev
       style={style}
     >
       <div className="image-zoom h-40 sm:h-48 md:h-56">
-        <img
+        <OptimizedImage
           src={image}
           alt={title}
           className="w-full h-full object-cover"
+          loading="lazy"
         />
       </div>
       <div className="p-3 sm:p-4 md:p-5">
