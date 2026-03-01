@@ -1,6 +1,7 @@
 import Layout from "@/components/Layout";
 import { Users, Target, Eye, Heart, Award, BookOpen, Plus, Pencil, Trash2, Shield, Crown, Globe, BookOpenCheck, PenTool } from "lucide-react";
 import scholarEmblem from "@/assets/scholar-emblem.jpg";
+import OptimizedImage from "@/components/OptimizedImage";
 import { useAdmin } from "@/contexts/AdminContext";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,7 @@ Today, the story of Scholar Educational Campus continues to evolve with humility
             </div>
             <div className="animate-slide-in-right">
               <div className="relative">
-                <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop" alt="School Building" className="rounded-lg shadow-xl w-full h-auto" />
+                <OptimizedImage src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop" alt="School Building" className="rounded-lg shadow-xl w-full h-auto" />
                 <div className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 bg-primary text-primary-foreground p-3 sm:p-4 md:p-6 rounded-lg shadow-lg">
                   <p className="text-2xl sm:text-3xl md:text-4xl font-bold">12+</p>
                   <p className="text-[10px] sm:text-xs md:text-sm opacity-90">Years of Excellence</p>
@@ -123,7 +124,7 @@ Today, the story of Scholar Educational Campus continues to evolve with humility
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
             <div className="flex justify-center animate-slide-in-left">
-              <img src={scholarEmblem} alt="Scholar Educational Campus Emblem" className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain rounded-2xl shadow-xl" />
+              <OptimizedImage src={scholarEmblem} alt="Scholar Educational Campus Emblem" className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain rounded-2xl shadow-xl" loading="eager" />
             </div>
             <div className="animate-slide-in-right">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-4 sm:mb-6">Our Emblem</h2>
@@ -254,7 +255,7 @@ Today, the story of Scholar Educational Campus continues to evolve with humility
                   </div>
                 )}
                 <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 mx-auto mb-2 sm:mb-3 md:mb-4 rounded-full overflow-hidden image-zoom border-2 sm:border-4 border-primary/20">
-                  <img src={leader.image} alt={leader.name} className="w-full h-full object-cover" />
+                  <OptimizedImage src={leader.image} alt={leader.name} className="w-full h-full object-cover" />
                 </div>
                 <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-foreground">{leader.name}</h3>
                 <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{leader.role}</p>
