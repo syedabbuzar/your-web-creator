@@ -100,8 +100,9 @@ const Footer = () => {
           <p className="text-xs sm:text-sm opacity-70">
             © {new Date().getFullYear()} Scholar Educational Campus. All rights reserved.
           </p>
+          <br />
           <p>
-            Developed by <a href="#" className="underline hover:text-primary">Syed Abbuzar</a>
+            Developed by Syed Abbuzar 
           </p>
         </div>
       </div>
