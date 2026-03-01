@@ -678,9 +678,6 @@ export default function QuizPage() {
   const renderAdmin = () => {
     if (!isAdmin) { setView("admin-login"); return null; }
 
-    // Load questions on first render of admin
-    useEffect(() => { if (adminQs.length === 0) loadAdminQuestions(); }, []);
-
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
