@@ -125,6 +125,7 @@ export default function QuizPage() {
       setIsAdmin(true);
       setView("admin-panel");
       loadAdminData();
+      loadAdminQuestions();
     } else if (token && savedUser) {
       setUser(savedUser);
       setView(savedUser.quizAttempted ? "result" : "quiz");
