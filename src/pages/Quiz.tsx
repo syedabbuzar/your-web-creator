@@ -24,8 +24,11 @@ import axiosInstance from "@/lib/axios";
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
+    const adminToken = localStorage.getItem("adminToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (adminToken) {
+      config.headers.Authorization = `Bearer ${adminToken}`;
     }
     return config;
   },
@@ -114,17 +117,30 @@ const apiDeleteQuestion = (id: string) =>
 const apiGetQuestionCounts = () =>
   axiosInstance.get("/questions/counts");
 
+// Updated API functions with error handling
 const apiSubmitQuiz = (answers: any[]) =>
-  axiosInstance.post("/quiz/submit", { answers });
+  axiosInstance.post("/quiz/submit", { answers }).catch((error) => {
+    toast.error(error.response?.data?.message || "Failed to submit quiz");
+    throw error;
+  });
+
 const apiGetResult = () =>
-  axiosInstance.get("/quiz/result");
+  axiosInstance.get("/quiz/result").catch((error) => {
+    toast.error(error.response?.data?.message || "Failed to get result");
+    throw error;
+  });
 
 const apiGetStudents = () =>
-  axiosInstance.get("/students");
-const apiGetStudentById = (id: string) =>
-  axiosInstance.get(`/students/${id}`);
+  axiosInstance.get("/students").catch((error) => {
+    toast.error(error.response?.data?.message || "Failed to get students");
+    return { data: [] };
+  });
+
 const apiGetStats = () =>
-  axiosInstance.get("/stats");
+  axiosInstance.get("/stats").catch((error) => {
+    toast.error(error.response?.data?.message || "Failed to get stats");
+    return { data: { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 } };
+  });
 
 // ============ TOKEN MANAGEMENT ============
 const getToken = () => localStorage.getItem("token");
@@ -162,7 +178,7 @@ export default function QuizPage() {
   const [studentClassFilter, setStudentClassFilter] = useState("all");
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{ totalStudents: number; attemptedQuiz: number; notAttempted: number }>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
 
   // Form State
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" });
@@ -201,12 +217,12 @@ export default function QuizPage() {
   const loadAdminData = async () => {
     try {
       const [studentsData, statsData, countsData] = await Promise.all([
-        apiGetStudents().catch(() => ({ data: [] })),
-        apiGetStats().catch(() => ({ data: null })),
+        apiGetStudents(),
+        apiGetStats(),
         apiGetQuestionCounts().catch(() => ({ data: {} })),
       ]);
-      setStudentsList(studentsData.data);
-      setStats(statsData.data);
+      setStudentsList(studentsData.data || []);
+      setStats(statsData.data || { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
       setQuestionCounts(countsData.data?.counts || countsData.data || {});
     } catch (err) {
       console.error("Admin data load error:", err);
@@ -225,25 +241,38 @@ export default function QuizPage() {
   // ============ AUTH HANDLERS ============
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.confirm || !form.class) {
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.confirm.trim() || !form.class.trim()) {
       toast.error("All fields are required");
       return;
     }
     if (form.password !== form.confirm) {
-      toast.error("Passwords mismatch");
+      toast.error("Passwords do not match");
       return;
     }
+    if (form.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      toast.error("Invalid email format");
+      return;
+    }
+    if (!form.class) {
+      toast.error("Please select a class");
+      return;
+    }
+
     setLoading(true);
     try {
       const { data } = await apiRegister({
-        name: form.name,
-        email: form.email,
-        password: form.password,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password.trim(),
         class: parseInt(form.class)
       });
       toast.success("Registered! Please login.");
       setView("login");
-      setForm({ ...form, password: "", confirm: "" });
+      setForm({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Registration failed");
     }
@@ -252,9 +281,13 @@ export default function QuizPage() {
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
+    if (!form.email.trim() || !form.password.trim()) {
+      toast.error("Email and password are required");
+      return;
+    }
     setLoading(true);
     try {
-      const { data } = await apiLogin(form.email, form.password);
+      const { data } = await apiLogin(form.email.trim(), form.password.trim());
       const u = data.user || data;
       localStorage.setItem("user", JSON.stringify(u));
       localStorage.setItem("token", data.token);
@@ -271,13 +304,13 @@ export default function QuizPage() {
 
   const handleChangeClass = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.newClass) {
-      toast.error("Select new class");
+    if (!form.email.trim() || !form.password.trim() || !form.newClass.trim()) {
+      toast.error("All fields are required");
       return;
     }
     setLoading(true);
     try {
-      const { data } = await apiChangeClass(form.email, form.password, parseInt(form.newClass));
+      const { data } = await apiChangeClass(form.email.trim(), form.password.trim(), parseInt(form.newClass));
       toast.success("Class updated! Login again.");
       logoutStudent();
       setUser(null);
@@ -301,9 +334,13 @@ export default function QuizPage() {
     const fd = new FormData(e.currentTarget as HTMLFormElement);
     const email = fd.get("email") as string;
     const pass = fd.get("password") as string;
+    if (!email.trim() || !pass.trim()) {
+      toast.error("Email and password are required");
+      return;
+    }
     setLoading(true);
     try {
-      const { data } = await apiAdminLogin(email, pass);
+      const { data } = await apiAdminLogin(email.trim(), pass.trim());
       localStorage.setItem("adminToken", data.token);
       setIsAdmin(true);
       setView("admin-panel");
@@ -429,11 +466,13 @@ export default function QuizPage() {
   });
 
   // ============ SUB-COMPONENTS ============
-  const ClassSelect = ({ value, onChange, label, disabled, showAll }: any) => (
+  const ClassSelect = ({ value, onChange, label, disabled, showAll }: { value: string; onChange: (value: string) => void; label?: string; disabled?: boolean; showAll?: boolean }) => (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
       <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger><SelectValue placeholder="Select class (1-10)" /></SelectTrigger>
+        <SelectTrigger>
+          <SelectValue placeholder="Select class (1-10)" />
+        </SelectTrigger>
         <SelectContent>
           {showAll && <SelectItem value="all">All Classes</SelectItem>}
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
@@ -644,7 +683,7 @@ export default function QuizPage() {
         <p className="text-muted-foreground max-w-xl mx-auto">Practice quizzes for Class 1-10. Register, attempt, and track progress.</p>
       </div>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Button size="lg" onClick={() => { setForm({ ...form, password: "", confirm: "" }); setView("register"); }}>
+        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" }); setView("register"); }}>
           <User className="w-4 h-4 mr-2" />Register
         </Button>
         <Button size="lg" variant="outline" onClick={() => { setForm({ ...form, password: "" }); setView("login"); }}>Login</Button>
@@ -686,25 +725,45 @@ export default function QuizPage() {
                   <Label>Name</Label>
                   <Input value={form.name} onChange={(e: any) => setForm({ ...form, name: e.target.value })} placeholder="Your name" required />
                 </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={form.email} onChange={(e: any) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Confirm Password</Label>
+                  <Input type="password" value={form.confirm} onChange={(e: any) => setForm({ ...form, confirm: e.target.value })} placeholder="••••••" required />
+                </div>
                 <ClassSelect value={form.class} onChange={(v: string) => setForm({ ...form, class: v })} label="Your Class" />
               </>
             )}
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={form.email} onChange={(e: any) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required disabled={view === "change-class"} />
-            </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} required />
-            </div>
-            {view === "register" && (
-              <div className="space-y-2">
-                <Label>Confirm Password</Label>
-                <Input type="password" value={form.confirm} onChange={(e: any) => setForm({ ...form, confirm: e.target.value })} placeholder="••••••" required />
-              </div>
+            {view === "login" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={form.email} onChange={(e: any) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required />
+                </div>
+              </>
             )}
             {view === "change-class" && (
-              <ClassSelect value={form.newClass} onChange={(v: string) => setForm({ ...form, newClass: v })} label="New Class" />
+              <>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={form.email} onChange={(e: any) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required />
+                </div>
+                <ClassSelect value={form.newClass} onChange={(v: string) => setForm({ ...form, newClass: v })} label="New Class" />
+              </>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Processing..." : view === "register" ? "Register" : view === "change-class" ? "Update" : "Login"}
@@ -713,7 +772,7 @@ export default function QuizPage() {
           <div className="mt-4 text-center space-y-2 text-sm">
             {view === "login" && (
               <>
-                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ ...form, password: "", confirm: "" }); setView("register"); }}>Register</Button></p>
+                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" }); setView("register"); }}>Register</Button></p>
                 <p>Wrong class? <Button variant="link" className="p-0 h-auto" onClick={() => setView("change-class")}>Change here</Button></p>
               </>
             )}
