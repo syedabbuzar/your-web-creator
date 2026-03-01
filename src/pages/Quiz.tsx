@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent, useRef } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,13 +18,21 @@ import {
   RotateCcw, Edit, Trash, Plus, Search, Users, Award, Eye, Printer,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  apiRegister, apiLogin, apiChangeClass, apiAdminLogin,
-  apiGetQuestions, apiAddQuestion, apiUpdateQuestion, apiDeleteQuestion,
-  apiGetQuestionCounts, apiSubmitQuiz, apiGetResult,
-  apiGetStudents, apiGetStudentById, apiGetStats,
-  getToken, getAdminToken, getSavedUser, logoutStudent as apiLogoutStudent, logoutAdmin as apiLogoutAdmin,
-} from "@/lib/quizApi";
+import axiosInstance from "@/lib/axios";
+
+// ============ AXIOS INTERCEPTOR ============
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // ============ TYPES ============
 type QuizView = "landing" | "register" | "login" | "quiz" | "result" | "admin-login" | "admin-panel" | "change-class";
@@ -85,6 +93,51 @@ ${student.wrongAnswers && student.wrongAnswers.length > 0 ? `
   if (win) { win.document.write(html); win.document.close(); }
 };
 
+// ============ API FUNCTIONS ============
+const apiRegister = (data: { name: string; email: string; password: string; class: number }) =>
+  axiosInstance.post("/auth/register", data);
+const apiLogin = (email: string, password: string) =>
+  axiosInstance.post("/auth/login", { email, password });
+const apiChangeClass = (email: string, password: string, newClass: number) =>
+  axiosInstance.post("/auth/change-class", { email, password, newClass });
+const apiAdminLogin = (email: string, password: string) =>
+  axiosInstance.post("/auth/admin-login", { email, password });
+
+const apiGetQuestions = (classNum?: number) =>
+  axiosInstance.get(classNum ? `/questions?class=${classNum}` : "/questions");
+const apiAddQuestion = (data: { question: string; class: number; options: any[]; correctOptionId: string }) =>
+  axiosInstance.post("/questions", data);
+const apiUpdateQuestion = (id: string, data: any) =>
+  axiosInstance.put(`/questions/${id}`, data);
+const apiDeleteQuestion = (id: string) =>
+  axiosInstance.delete(`/questions/${id}`);
+const apiGetQuestionCounts = () =>
+  axiosInstance.get("/questions/counts");
+
+const apiSubmitQuiz = (answers: any[]) =>
+  axiosInstance.post("/quiz/submit", { answers });
+const apiGetResult = () =>
+  axiosInstance.get("/quiz/result");
+
+const apiGetStudents = () =>
+  axiosInstance.get("/students");
+const apiGetStudentById = (id: string) =>
+  axiosInstance.get(`/students/${id}`);
+const apiGetStats = () =>
+  axiosInstance.get("/stats");
+
+// ============ TOKEN MANAGEMENT ============
+const getToken = () => localStorage.getItem("token");
+const getAdminToken = () => localStorage.getItem("adminToken");
+const getSavedUser = () => JSON.parse(localStorage.getItem("user") || "null");
+const logoutStudent = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+};
+const logoutAdmin = () => {
+  localStorage.removeItem("adminToken");
+};
+
 // ============ MAIN COMPONENT ============
 export default function QuizPage() {
   const [view, setView] = useState<QuizView>("landing");
@@ -137,24 +190,24 @@ export default function QuizPage() {
 
   const loadQuestions = async (classNum: number) => {
     try {
-      const data = await apiGetQuestions(classNum);
+      const { data } = await apiGetQuestions(classNum);
       setQuestions(Array.isArray(data) ? data : data.questions || data.data || []);
     } catch (err: any) {
       console.error("Failed to load questions:", err);
-      toast.error("Failed to load questions");
+      toast.error(err.response?.data?.message || "Failed to load questions");
     }
   };
 
   const loadAdminData = async () => {
     try {
       const [studentsData, statsData, countsData] = await Promise.all([
-        apiGetStudents().catch(() => []),
-        apiGetStats().catch(() => null),
-        apiGetQuestionCounts().catch(() => ({})),
+        apiGetStudents().catch(() => ({ data: [] })),
+        apiGetStats().catch(() => ({ data: null })),
+        apiGetQuestionCounts().catch(() => ({ data: {} })),
       ]);
-      setStudentsList(Array.isArray(studentsData) ? studentsData : studentsData?.students || studentsData?.data || []);
-      setStats(statsData);
-      setQuestionCounts(countsData?.counts || countsData || {});
+      setStudentsList(studentsData.data);
+      setStats(statsData.data);
+      setQuestionCounts(countsData.data?.counts || countsData.data || {});
     } catch (err) {
       console.error("Admin data load error:", err);
     }
@@ -162,24 +215,37 @@ export default function QuizPage() {
 
   const loadAdminQuestions = async () => {
     try {
-      const data = await apiGetQuestions();
+      const { data } = await apiGetQuestions();
       setAdminQs(Array.isArray(data) ? data : data.questions || data.data || []);
-    } catch { toast.error("Failed to load questions"); }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to load questions");
+    }
   };
 
   // ============ AUTH HANDLERS ============
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    if (form.password !== form.confirm) { toast.error("Passwords mismatch"); return; }
-    if (!form.class) { toast.error("Select class"); return; }
+    if (!form.name || !form.email || !form.password || !form.confirm || !form.class) {
+      toast.error("All fields are required");
+      return;
+    }
+    if (form.password !== form.confirm) {
+      toast.error("Passwords mismatch");
+      return;
+    }
     setLoading(true);
     try {
-      await apiRegister({ name: form.name, email: form.email, password: form.password, class: parseInt(form.class) });
+      const { data } = await apiRegister({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        class: parseInt(form.class)
+      });
       toast.success("Registered! Please login.");
       setView("login");
       setForm({ ...form, password: "", confirm: "" });
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.response?.data?.error || "Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed");
     }
     setLoading(false);
   };
@@ -188,38 +254,43 @@ export default function QuizPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const data = await apiLogin(form.email, form.password);
+      const { data } = await apiLogin(form.email, form.password);
       const u = data.user || data;
+      localStorage.setItem("user", JSON.stringify(u));
+      localStorage.setItem("token", data.token);
       setUser(u);
       setForm({ ...form, password: "" });
       toast.success("Login successful");
       await loadQuestions(u.class);
       setView(u.quizAttempted ? "result" : "quiz");
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.response?.data?.error || "Login failed");
+      toast.error(err.response?.data?.message || "Login failed");
     }
     setLoading(false);
   };
 
   const handleChangeClass = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.newClass) { toast.error("Select new class"); return; }
+    if (!form.newClass) {
+      toast.error("Select new class");
+      return;
+    }
     setLoading(true);
     try {
-      await apiChangeClass(form.email, form.password, parseInt(form.newClass));
+      const { data } = await apiChangeClass(form.email, form.password, parseInt(form.newClass));
       toast.success("Class updated! Login again.");
-      apiLogoutStudent();
+      logoutStudent();
       setUser(null);
       setView("login");
       setForm({ ...form, password: "", newClass: "" });
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.response?.data?.error || "Failed to update class");
+      toast.error(err.response?.data?.message || "Failed to update class");
     }
     setLoading(false);
   };
 
   const handleLogout = () => {
-    apiLogoutStudent();
+    logoutStudent();
     setUser(null);
     setView("landing");
     toast.info("Logged out");
@@ -232,7 +303,8 @@ export default function QuizPage() {
     const pass = fd.get("password") as string;
     setLoading(true);
     try {
-      await apiAdminLogin(email, pass);
+      const { data } = await apiAdminLogin(email, pass);
+      localStorage.setItem("adminToken", data.token);
       setIsAdmin(true);
       setView("admin-panel");
       toast.success("Admin access granted");
@@ -240,13 +312,13 @@ export default function QuizPage() {
       await loadAdminData();
       await loadAdminQuestions();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || err.response?.data?.error || "Invalid admin credentials");
+      toast.error(err.response?.data?.message || "Invalid admin credentials");
     }
     setLoading(false);
   };
 
   const handleAdminLogout = () => {
-    apiLogoutAdmin();
+    logoutAdmin();
     setIsAdmin(false);
     setView("landing");
     toast.info("Admin logged out");
@@ -254,14 +326,21 @@ export default function QuizPage() {
 
   // ============ QUIZ HANDLERS ============
   const startQuiz = () => {
-    if (questions.length === 0) { toast.error("No questions for your class"); return; }
-    if (user?.quizAttempted) { setView("result"); return; }
+    if (questions.length === 0) {
+      toast.error("No questions for your class");
+      return;
+    }
+    if (user?.quizAttempted) {
+      setView("result");
+      return;
+    }
     setAnswers({});
     setCurrentIdx(0);
     setView("quiz");
   };
 
-  const selectAnswer = (qid: string, opt: "a" | "b" | "c") => setAnswers((p) => ({ ...p, [qid]: opt }));
+  const selectAnswer = (qid: string, opt: "a" | "b" | "c") =>
+    setAnswers((p) => ({ ...p, [qid]: opt }));
 
   const nextQ = () => {
     if (currentIdx < questions.length - 1) setCurrentIdx((p) => p + 1);
@@ -280,11 +359,12 @@ export default function QuizPage() {
         questionId: q._id,
         selectedOptionId: answers[q._id] || "",
       }));
-      const result = await apiSubmitQuiz(answerPayload);
-      const updatedUser = { ...user, quizAttempted: true, quizScore: result.score, wrongAnswers: result.wrongAnswers || [] };
+      const { data } = await apiSubmitQuiz(answerPayload);
+      const updatedUser = { ...user, quizAttempted: true, quizScore: data.score, wrongAnswers: data.wrongAnswers || [] };
       setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
       setView("result");
-      toast.success(`Submitted! Score: ${result.score}/${questions.length}`);
+      toast.success(`Submitted! Score: ${data.score}/${questions.length}`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Submission failed");
     }
@@ -297,14 +377,24 @@ export default function QuizPage() {
     const opts = data.options.map((t, i) => ({ id: String.fromCharCode(97 + i) as "a" | "b" | "c", text: t }));
     try {
       if (editingQ) {
-        await apiUpdateQuestion(editingQ._id, { question: data.question, class: data.class, options: opts, correctOptionId: opts[data.correctIdx].id });
+        await apiUpdateQuestion(editingQ._id, {
+          question: data.question,
+          class: data.class,
+          options: opts,
+          correctOptionId: opts[data.correctIdx].id
+        });
         toast.success("Question updated");
       } else {
-        await apiAddQuestion({ question: data.question, class: data.class, options: opts, correctOptionId: opts[data.correctIdx].id });
+        await apiAddQuestion({
+          question: data.question,
+          class: data.class,
+          options: opts,
+          correctOptionId: opts[data.correctIdx].id
+        });
         toast.success("Question added");
       }
       await loadAdminQuestions();
-      const counts = await apiGetQuestionCounts().catch(() => ({}));
+      const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: {} }));
       setQuestionCounts(counts?.counts || counts || {});
       setEditingQ(null);
     } catch (err: any) {
@@ -318,7 +408,7 @@ export default function QuizPage() {
     try {
       await apiDeleteQuestion(id);
       await loadAdminQuestions();
-      const counts = await apiGetQuestionCounts().catch(() => ({}));
+      const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: {} }));
       setQuestionCounts(counts?.counts || counts || {});
       toast.success("Deleted");
     } catch (err: any) {
@@ -443,7 +533,10 @@ export default function QuizPage() {
     });
     const submit = (e: FormEvent) => {
       e.preventDefault();
-      if (!f.question.trim() || f.options.some((o: string) => !o.trim())) { toast.error("Fill all fields"); return; }
+      if (!f.question.trim() || f.options.some((o: string) => !o.trim())) {
+        toast.error("Fill all fields");
+        return;
+      }
       onSave({ question: f.question, class: parseInt(f.class), options: f.options, correctIdx: f.correctIdx });
     };
     return (
