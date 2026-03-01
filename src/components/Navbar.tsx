@@ -13,6 +13,7 @@ const navLinks = [
   { name: "Campus", path: "/campus" },
   { name: "Exam", path: "/exam" },
   { name: "Admission", path: "/admission" },
+  { name: "Quiz", path: "/quiz" },
 ];
 
 const Navbar = () => {

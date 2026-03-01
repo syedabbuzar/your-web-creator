@@ -263,7 +263,7 @@ Today, the story of Scholar Educational Campus continues to evolve with humility
           </div>
         </div>
       </section>
-
+            
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="mx-4 max-w-md sm:max-w-lg">
