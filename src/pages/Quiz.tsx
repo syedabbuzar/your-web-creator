@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -20,33 +20,34 @@ import {
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 
-// ============ AXIOS INTERCEPTOR ============
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    const adminToken = localStorage.getItem("adminToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (adminToken) {
-      config.headers.Authorization = `Bearer ${adminToken}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
 // ============ TYPES ============
 type QuizView = "landing" | "register" | "login" | "quiz" | "result" | "admin-login" | "admin-panel" | "change-class";
 
 interface QuizOption { id: "a" | "b" | "c"; text: string; }
-interface QuizQuestion { _id: string; question: string; options: QuizOption[]; correctOptionId: "a" | "b" | "c"; class: number; createdAt: string; }
-interface WrongAnswer { questionId: string; questionText: string; selectedOption: string; correctOption: string; }
+interface QuizQuestion {
+  _id: string;
+  question: string;
+  options: QuizOption[];
+  correctOptionId: "a" | "b" | "c";
+  class: number;
+  createdAt: string;
+}
+interface WrongAnswer {
+  questionId: string;
+  questionText: string;
+  selectedOption: string;
+  correctOption: string;
+}
 interface StudentData {
-  _id: string; name: string; email: string; class: number;
-  quizAttempted: boolean; quizScore?: number; wrongAnswers?: WrongAnswer[];
-  createdAt: string; role?: string;
+  _id: string;
+  name: string;
+  email: string;
+  class: number;
+  quizAttempted: boolean;
+  quizScore?: number;
+  wrongAnswers?: WrongAnswer[];
+  createdAt: string;
+  role?: string;
 }
 
 // ============ PRINT HELPER ============
@@ -98,102 +99,72 @@ ${student.wrongAnswers && student.wrongAnswers.length > 0 ? `
 
 // ============ API FUNCTIONS ============
 const apiRegister = (data: { name: string; email: string; password: string; class: number }) =>
-  axiosInstance.post("/auth/register", {
-    name: data.name,
-    email: data.email,
-    password: data.password,
-    class: data.class,
-  });
+  axiosInstance.post("/auth/register", data);
+
 const apiLogin = (email: string, password: string) =>
   axiosInstance.post("/auth/login", { email, password });
+
 const apiChangeClass = (email: string, password: string, newClass: number) =>
   axiosInstance.post("/auth/change-class", { email, password, newClass });
+
 const apiAdminLogin = (email: string, password: string) =>
   axiosInstance.post("/auth/admin-login", { email, password });
 
 const apiGetQuestions = (classNum?: number) =>
   axiosInstance.get(classNum ? `/questions?class=${classNum}` : "/questions");
+
 const apiAddQuestion = (data: { question: string; class: number; options: any[]; correctOptionId: string }) =>
   axiosInstance.post("/questions", data);
+
 const apiUpdateQuestion = (id: string, data: any) =>
   axiosInstance.put(`/questions/${id}`, data);
+
 const apiDeleteQuestion = (id: string) =>
   axiosInstance.delete(`/questions/${id}`);
+
 const apiGetQuestionCounts = () =>
   axiosInstance.get("/questions/counts");
 
-// Updated API functions with error handling
 const apiSubmitQuiz = (answers: any[]) =>
-  axiosInstance.post("/quiz/submit", { answers }).catch((error) => {
-    toast.error(error.response?.data?.message || "Failed to submit quiz");
-    throw error;
-  });
+  axiosInstance.post("/quiz/submit", { answers });
 
 const apiGetResult = () =>
-  axiosInstance.get("/quiz/result").catch((error) => {
-    toast.error(error.response?.data?.message || "Failed to get result");
-    throw error;
-  });
+  axiosInstance.get("/quiz/result");
 
 const apiGetStudents = () =>
-  axiosInstance.get("/admin/students").catch((error) => {
-    toast.error(error.response?.data?.message || "Failed to get students");
-    return { data: [] };
-  });
+  axiosInstance.get("/admin/students");
 
 const apiGetStats = () =>
-  axiosInstance.get("/admin/stats").catch((error) => {
-    toast.error(error.response?.data?.message || "Failed to get stats");
-    return { data: { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 } };
-  });
-
-// ============ TOKEN MANAGEMENT ============
-const getToken = () => localStorage.getItem("token");
-const getAdminToken = () => localStorage.getItem("adminToken");
-const getSavedUser = () => JSON.parse(localStorage.getItem("user") || "null");
-const logoutStudent = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-};
-const logoutAdmin = () => {
-  localStorage.removeItem("adminToken");
-};
+  axiosInstance.get("/admin/stats");
 
 // ============ MAIN COMPONENT ============
 export default function QuizPage() {
+  // State initialization
   const [view, setView] = useState<QuizView>("landing");
   const [user, setUser] = useState<StudentData | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  // Quiz State
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, "a" | "b" | "c">>({});
-
-  // Admin State
   const [adminQs, setAdminQs] = useState<QuizQuestion[]>([]);
   const [adminFilter, setAdminFilter] = useState("all");
   const [adminSearch, setAdminSearch] = useState("");
   const [editingQ, setEditingQ] = useState<QuizQuestion | null>(null);
   const [adminLoading, setAdminLoading] = useState(false);
   const [questionCounts, setQuestionCounts] = useState<Record<number, number>>({});
-
-  // Student Details State
   const [studentsList, setStudentsList] = useState<StudentData[]>([]);
   const [studentClassFilter, setStudentClassFilter] = useState("all");
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
-  const [stats, setStats] = useState<{ totalStudents: number; attemptedQuiz: number; notAttempted: number }>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
-
-  // Form State
+  const [stats, setStats] = useState({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
 
   // Initialize on mount
   useEffect(() => {
-    const token = getToken();
-    const adminToken = getAdminToken();
-    const savedUser = getSavedUser();
+    const token = localStorage.getItem("token");
+    const adminToken = localStorage.getItem("adminToken");
+    const savedUser = JSON.parse(localStorage.getItem("user") || "null");
 
     if (adminToken) {
       setIsAdmin(true);
@@ -209,16 +180,17 @@ export default function QuizPage() {
     }
   }, []);
 
+  // Load questions for a class
   const loadQuestions = async (classNum: number) => {
     try {
       const { data } = await apiGetQuestions(classNum);
-      setQuestions(Array.isArray(data) ? data : data.questions || data.data || []);
+      setQuestions(Array.isArray(data.questions) ? data.questions : []);
     } catch (err: any) {
-      console.error("Failed to load questions:", err);
       toast.error(err.response?.data?.message || "Failed to load questions");
     }
   };
 
+  // Load admin data
   const loadAdminData = async () => {
     try {
       const [studentsData, statsData, countsData] = await Promise.all([
@@ -226,18 +198,19 @@ export default function QuizPage() {
         apiGetStats(),
         apiGetQuestionCounts().catch(() => ({ data: {} })),
       ]);
-      setStudentsList(studentsData.data || []);
-      setStats(statsData.data || { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
-      setQuestionCounts(countsData.data?.counts || countsData.data || {});
+      setStudentsList(studentsData.data?.students || []);
+      setStats(statsData.data?.stats || { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
+      setQuestionCounts(countsData.data?.counts || {});
     } catch (err) {
       console.error("Admin data load error:", err);
     }
   };
 
+  // Load admin questions
   const loadAdminQuestions = async () => {
     try {
       const { data } = await apiGetQuestions();
-      setAdminQs(Array.isArray(data) ? data : data.questions || data.data || []);
+      setAdminQs(Array.isArray(data.questions) ? data.questions : []);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to load questions");
     }
@@ -256,10 +229,6 @@ export default function QuizPage() {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       toast.error("Invalid email format");
-      return;
-    }
-    if (!form.class) {
-      toast.error("Please select a class");
       return;
     }
 
@@ -331,7 +300,8 @@ export default function QuizPage() {
   };
 
   const handleLogout = () => {
-    logoutStudent();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setUser(null);
     setView("landing");
     toast.info("Logged out");
@@ -363,7 +333,7 @@ export default function QuizPage() {
   };
 
   const handleAdminLogout = () => {
-    logoutAdmin();
+    localStorage.removeItem("adminToken");
     setIsAdmin(false);
     setView("landing");
     toast.info("Admin logged out");
@@ -440,7 +410,7 @@ export default function QuizPage() {
       }
       await loadAdminQuestions();
       const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: {} }));
-      setQuestionCounts(counts?.counts || counts || {});
+      setQuestionCounts(counts?.counts || {});
       setEditingQ(null);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Save failed");
@@ -454,13 +424,14 @@ export default function QuizPage() {
       await apiDeleteQuestion(id);
       await loadAdminQuestions();
       const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: {} }));
-      setQuestionCounts(counts?.counts || counts || {});
+      setQuestionCounts(counts?.counts || {});
       toast.success("Deleted");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Delete failed");
     }
   };
 
+  // ============ FILTERED DATA ============
   const filteredAdminQs = adminQs.filter((q) => {
     const cMatch = adminFilter === "all" || q.class === parseInt(adminFilter);
     const sMatch = q.question.toLowerCase().includes(adminSearch.toLowerCase());
@@ -800,6 +771,7 @@ export default function QuizPage() {
         </CardContent>
       </Card>
     );
+
     const q = questions[currentIdx];
     const progress = Math.round(((currentIdx + 1) / questions.length) * 100);
     return (

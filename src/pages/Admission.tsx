@@ -134,7 +134,7 @@ const Admission = () => {
         await axios.post("/admissions", payload);
       } catch (apiErr) {
         console.warn("Backend API not available, continuing with local receipt:", apiErr);
-      }
+      } 
 
       setReceipt({
         studentName: formData.studentName,

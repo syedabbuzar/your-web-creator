@@ -125,7 +125,7 @@ const Index = () => {
           </div>
         </div>
       </section>
-
+                  
       {/* CTA Section */}
       <section className="py-10 sm:py-14 md:py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
