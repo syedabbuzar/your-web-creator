@@ -97,8 +97,13 @@ ${student.wrongAnswers && student.wrongAnswers.length > 0 ? `
 };
 
 // ============ API FUNCTIONS ============
-const apiRegister = (data: { name: string; email: string; password: string; class: number }) =>
-  axiosInstance.post("/auth/register", data);
+const apiRegister = (data: { name: string; email: string; password: string; class: number; confirmPassword?: string }) =>
+  axiosInstance.post("/auth/register", {
+    ...data,
+    class: data.class,
+    classNum: data.class,
+    studentClass: data.class,
+  });
 const apiLogin = (email: string, password: string) =>
   axiosInstance.post("/auth/login", { email, password });
 const apiChangeClass = (email: string, password: string, newClass: number) =>
@@ -264,11 +269,19 @@ export default function QuizPage() {
 
     setLoading(true);
     try {
+      const selectedClass = Number(form.class);
+      if (!Number.isInteger(selectedClass) || selectedClass < 1 || selectedClass > 10) {
+        toast.error("Please select a valid class");
+        setLoading(false);
+        return;
+      }
+
       const { data } = await apiRegister({
         name: form.name.trim(),
-        email: form.email.trim(),
+        email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
-        class: parseInt(form.class)
+        confirmPassword: form.confirm.trim(),
+        class: selectedClass,
       });
       toast.success("Registered! Please login.");
       setView("login");
