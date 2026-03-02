@@ -18,7 +18,7 @@ import {
   RotateCcw, Edit, Trash, Plus, Search, Eye, Printer,
 } from "lucide-react";
 import { toast } from "sonner";
-import axios, { AxiosInstance } from "axios";
+import axiosInstance from "@/lib/axios";
 
 // ============ TYPES ============
 type QuizView = "landing" | "register" | "login" | "quiz" | "result" | "admin-login" | "admin-panel" | "change-class";
@@ -155,44 +155,6 @@ ${student.wrongAnswers && student.wrongAnswers.length > 0 ? `
   const win = window.open('', '_blank');
   if (win) { win.document.write(html); win.document.close(); }
 };
-
-// ============ AXIOS INSTANCE SETUP ============
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
-const createAxiosInstance = (): AxiosInstance => {
-  const instance = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  // Request interceptor to add token
-  instance.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // Response interceptor for error handling
-  instance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      // Log full error for debugging
-      console.error('API Error:', error.response?.data || error.message);
-      return Promise.reject(error);
-    }
-  );
-
-  return instance;
-};
-
-const axiosInstance = createAxiosInstance();
 
 // ============ MAIN COMPONENT ============
 export default function QuizPage() {

@@ -1,5 +1,5 @@
 import Layout from "@/components/Layout";
-import { Calendar, Tag, Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Tag, Plus, Pencil, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Button } from "@/components/ui/button";
