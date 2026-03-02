@@ -280,7 +280,6 @@ export default function QuizPage() {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
-        confirmPassword: form.confirm.trim(),
         class: selectedClass,
       });
       toast.success("Registered! Please login.");
