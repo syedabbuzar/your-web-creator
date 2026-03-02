@@ -92,7 +92,7 @@ const About = () => {
       {/* History Section */}
       <section className="py-10 sm:py-14 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
+          <div className="max-w-4xl mx-auto">
             <div className="animate-slide-in-left">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground mb-4 sm:mb-6">Our History</h2>
               <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4 leading-relaxed">
@@ -105,15 +105,6 @@ const About = () => {
                 Through steady guidance and a long-term vision, they laid the groundwork upon which the institution continues to grow — supported by dedicated educators, inspired students, and a community that believes in its mission.
 Today, the story of Scholar Educational Campus continues to evolve with humility and gratitude, carrying forward a legacy built on faith, unity, and service to education.
               </p>
-            </div>
-            <div className="animate-slide-in-right">
-              <div className="relative">
-                <OptimizedImage src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop" alt="School Building" className="rounded-lg shadow-xl w-full h-auto" />
-                <div className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 bg-primary text-primary-foreground p-3 sm:p-4 md:p-6 rounded-lg shadow-lg">
-                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold">12+</p>
-                  <p className="text-[10px] sm:text-xs md:text-sm opacity-90">Years of Excellence</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
