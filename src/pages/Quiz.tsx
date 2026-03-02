@@ -131,13 +131,13 @@ const apiGetResult = () =>
   });
 
 const apiGetStudents = () =>
-  axiosInstance.get("/students").catch((error) => {
+  axiosInstance.get("/admin/students").catch((error) => {
     toast.error(error.response?.data?.message || "Failed to get students");
     return { data: [] };
   });
 
 const apiGetStats = () =>
-  axiosInstance.get("/stats").catch((error) => {
+  axiosInstance.get("/admin/stats").catch((error) => {
     toast.error(error.response?.data?.message || "Failed to get stats");
     return { data: { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 } };
   });

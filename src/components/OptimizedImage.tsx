@@ -9,7 +9,6 @@ const FALLBACK_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
 
 const OptimizedImage = ({ src, alt, className, fallback, loading = "lazy", ...props }: OptimizedImageProps) => {
   const [error, setError] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   const handleError = () => {
     if (!error) setError(true);
@@ -21,15 +20,9 @@ const OptimizedImage = ({ src, alt, className, fallback, loading = "lazy", ...pr
     <img
       src={imgSrc}
       alt={alt || ""}
-      className={cn(
-        "transition-opacity duration-300",
-        !loaded && "opacity-0",
-        loaded && "opacity-100",
-        className
-      )}
+      className={cn(className)}
       loading={loading}
       onError={handleError}
-      onLoad={() => setLoaded(true)}
       decoding="async"
       {...props}
     />
