@@ -47,9 +47,9 @@ const Exam = () => {
   const fetchData = async () => {
     try {
       const [schedRes, resRes, resourcesRes] = await Promise.all([
-        axiosInstance.get("/exam-schedules"),
-        axiosInstance.get("/exam/results"),
-        axiosInstance.get("/exam/resources"),
+        axiosInstance.get("/exam-schedules"), // Replace with actual endpoint if different
+        axiosInstance.get("/exam/results"), // Updated to use new endpoint
+        axiosInstance.get("/exam/resources"), // Updated to use new endpoint
       ]);
       setExamSchedule(schedRes.data || []);
       setResults(resRes.data || []);
@@ -62,49 +62,6 @@ const Exam = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
-
-  // Schedule CRUD
-  const openAddSchedule = () => {
-    setEditingSchedule(null);
-    setScheduleForm({ exam: "", classes: "", start_date: "", end_date: "" });
-    setScheduleDialog(true);
-  };
-
-  const openEditSchedule = (s: any) => {
-    setEditingSchedule(s);
-    setScheduleForm({ exam: s.exam, classes: s.classes, start_date: s.start_date, end_date: s.end_date });
-    setScheduleDialog(true);
-  };
-
-  const saveSchedule = async () => {
-    if (!scheduleForm.exam || !scheduleForm.classes || !scheduleForm.start_date || !scheduleForm.end_date) {
-      toast.error("All fields required");
-      return;
-    }
-    try {
-      if (editingSchedule) {
-        await axiosInstance.put(`/exam-schedules/${editingSchedule._id}`, scheduleForm);
-        toast.success("Schedule updated!");
-      } else {
-        await axiosInstance.post("/exam-schedules", scheduleForm);
-        toast.success("Schedule added!");
-      }
-      setScheduleDialog(false);
-      fetchData();
-    } catch (error) {
-      toast.error("Failed to save schedule");
-    }
-  };
-
-  const deleteSchedule = async (id: string) => {
-    try {
-      await axiosInstance.delete(`/exam-schedules/${id}`);
-      toast.success("Schedule removed!");
-      fetchData();
-    } catch (error) {
-      toast.error("Failed to delete schedule");
-    }
-  };
 
   // Result CRUD
   const openAddResult = () => {
@@ -166,6 +123,7 @@ const Exam = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
+    // Replace with your actual upload endpoint
     const { data } = await axiosInstance.post("/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -227,23 +185,164 @@ const Exam = () => {
         </div>
       </section>
 
-      {/* Exam Schedule Section */}
-      <section className="py-10 sm:py-14 md:py-20">
-        {/* Exam Schedule Content */}
-      </section>
-
       {/* Results Section */}
       <section className="py-10 sm:py-14 md:py-20 bg-secondary/30">
-        {/* Results Content */}
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-6 sm:mb-8 md:mb-12">
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">Result Announcements</h2>
+            </div>
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Check your examination results here</p>
+            {isAdmin && (
+              <Button onClick={openAddResult} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm mt-3">
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add Result
+              </Button>
+            )}
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
+            {results.map((result, index) => (
+              <div key={result._id} className="bg-card p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEditResult(result)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary"><Pencil className="w-3.5 h-3.5 text-primary" /></button>
+                    <button onClick={() => deleteResult(result._id)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10"><Trash2 className="w-3.5 h-3.5 text-destructive" /></button>
+                  </div>
+                )}
+                <Clock className="w-10 h-10 sm:w-12 sm:h-12 text-primary mx-auto mb-3 animate-float" />
+                <h3 className="text-base sm:text-lg font-bold text-foreground mb-2 text-center">{result.title}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2 text-center">{result.description}</p>
+                {result.result_date && <p className="text-xs text-primary font-medium text-center">{result.result_date}</p>}
+                <div className="text-center">
+                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${result.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    {result.status === 'published' ? 'Published' : 'Upcoming'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* Guidelines & Resources Section */}
+      {/* Resources Section */}
       <section className="py-10 sm:py-14 md:py-20">
-        {/* Guidelines & Resources Content */}
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Download className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">Download Resources</h2>
+            </div>
+            {isAdmin && (
+              <Button onClick={openAddResource} size="sm" className="bg-primary text-primary-foreground rounded-full text-xs sm:text-sm">
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> Add Resource
+              </Button>
+            )}
+          </div>
+          <div className="space-y-2 sm:space-y-3 md:space-y-4">
+            {resources.map((resource, index) => (
+              <div key={resource._id} className="flex items-center justify-between p-3 sm:p-4 bg-card rounded-lg shadow card-hover animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <FileText className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-foreground text-xs sm:text-sm">{resource.title}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{resource.file_type} • {resource.file_size}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  {isAdmin && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
+                      <button onClick={() => openEditResource(resource)} className="p-1.5 hover:bg-secondary rounded"><Pencil className="w-3 h-3 text-primary" /></button>
+                      <button onClick={() => deleteResource(resource._id)} className="p-1.5 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
+                    </div>
+                  )}
+                  {resource.file_url && (
+                    <a href={resource.file_url} target="_blank" rel="noopener noreferrer" download>
+                      <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground p-1.5 sm:p-2">
+                        <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+            {resources.length === 0 && !loading && (
+              <p className="text-center text-muted-foreground text-sm py-4">No resources available yet.</p>
+            )}
+          </div>
+        </div>
       </section>
 
-      {/* Dialogs */}
-      {/* Schedule Dialog, Result Dialog, Resource Dialog */}
+      {/* Result Dialog */}
+      <Dialog open={resultDialog} onOpenChange={setResultDialog}>
+        <DialogContent className="mx-4 max-w-md">
+          <DialogHeader><DialogTitle className="text-base sm:text-lg">{editingResult ? "Edit Result" : "Add Result"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Title *</Label><Input value={resultForm.title} onChange={e => setResultForm({ ...resultForm, title: e.target.value })} placeholder="e.g. First Term Results" className="text-sm" /></div>
+            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Description</Label><Textarea value={resultForm.description} onChange={e => setResultForm({ ...resultForm, description: e.target.value })} placeholder="Description" className="text-sm" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Result Date</Label><Input value={resultForm.result_date} onChange={e => setResultForm({ ...resultForm, result_date: e.target.value })} placeholder="e.g. August 1, 2025" className="text-sm" /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs sm:text-sm">Status</Label>
+                <select value={resultForm.status} onChange={e => setResultForm({ ...resultForm, status: e.target.value })} className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm">
+                  <option value="upcoming">Upcoming</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+            </div>
+            <Button onClick={saveResult} className="w-full bg-primary text-primary-foreground text-sm">{editingResult ? "Update" : "Add"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resource Dialog */}
+      <Dialog open={resourceDialog} onOpenChange={setResourceDialog}>
+        <DialogContent className="mx-4 max-w-md">
+          <DialogHeader><DialogTitle className="text-base sm:text-lg">{editingResource ? "Edit Resource" : "Add Resource"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Title *</Label><Input value={resourceForm.title} onChange={e => setResourceForm({ ...resourceForm, title: e.target.value })} placeholder="e.g. Examination Guidelines 2025" className="text-sm" /></div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">File Type</Label>
+              <select value={resourceForm.file_type} onChange={e => setResourceForm({ ...resourceForm, file_type: e.target.value })} className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm">
+                <option value="PDF">PDF</option>
+                <option value="ZIP">ZIP</option>
+                <option value="DOC">DOC</option>
+                <option value="DOCX">DOCX</option>
+                <option value="XLS">XLS</option>
+                <option value="XLSX">XLSX</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">File Size (e.g., 2.5 MB)</Label>
+              <Input value={resourceForm.file_size} onChange={e => setResourceForm({ ...resourceForm, file_size: e.target.value })} placeholder="e.g., 2.5 MB" className="text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs sm:text-sm">File URL *</Label>
+              <div className="flex gap-2">
+                <Input value={resourceForm.file_url} onChange={e => setResourceForm({ ...resourceForm, file_url: e.target.value })} placeholder="File URL" className="text-sm flex-1" />
+                <Button variant="outline" onClick={() => fileInputRef.current?.click()} className="text-sm">
+                  <Upload className="w-4 h-4 mr-2" /> Upload
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={async (e) => {
+                    if (e.target.files?.[0]) {
+                      setUploading(true);
+                      const url = await uploadFile(e.target.files[0]);
+                      setResourceForm({ ...resourceForm, file_url: url });
+                      setUploading(false);
+                    }
+                  }}
+                  className="hidden"
+                />
+              </div>
+            </div>
+            <Button onClick={saveResource} disabled={uploading} className="w-full bg-primary text-primary-foreground text-sm">
+              {uploading ? "Uploading..." : editingResource ? "Update" : "Add"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
