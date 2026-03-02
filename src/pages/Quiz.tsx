@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +23,11 @@ import axiosInstance from "@/lib/axios";
 // ============ TYPES ============
 type QuizView = "landing" | "register" | "login" | "quiz" | "result" | "admin-login" | "admin-panel" | "change-class";
 
-interface QuizOption { id: "a" | "b" | "c"; text: string; }
+interface QuizOption {
+  id: "a" | "b" | "c";
+  text: string;
+}
+
 interface QuizQuestion {
   _id: string;
   question: string;
@@ -32,12 +36,14 @@ interface QuizQuestion {
   class: number;
   createdAt: string;
 }
+
 interface WrongAnswer {
   questionId: string;
   questionText: string;
   selectedOption: string;
   correctOption: string;
 }
+
 interface StudentData {
   _id: string;
   name: string;
@@ -48,6 +54,59 @@ interface StudentData {
   wrongAnswers?: WrongAnswer[];
   createdAt: string;
   role?: string;
+}
+
+interface QuestionCounts {
+  [key: number]: number;
+}
+
+interface Stats {
+  totalStudents: number;
+  attemptedQuiz: number;
+  notAttempted: number;
+}
+
+// Props for subcomponents
+interface ClassSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
+  disabled?: boolean;
+  showAll?: boolean;
+}
+
+interface QuestionCardProps {
+  q: QuizQuestion;
+  selected?: "a" | "b" | "c";
+  onSelect: (qid: string, opt: "a" | "b" | "c") => void;
+  showResult?: boolean;
+  num: number;
+}
+
+interface ResultCardProps {
+  score: number;
+  total: number;
+  wrong: WrongAnswer[];
+  cls: number;
+}
+
+interface AdminQuestionFormData {
+  question: string;
+  class: number;
+  options: string[];
+  correctIdx: number;
+}
+
+interface AdminQuestionFormProps {
+  initial?: QuizQuestion | null;
+  onSave: (data: AdminQuestionFormData) => void;
+  onCancel: () => void;
+  adminLoading?: boolean;
+}
+
+interface StudentDetailsModalProps {
+  student: StudentData | null;
+  onClose: () => void;
 }
 
 // ============ PRINT HELPER ============
@@ -113,7 +172,7 @@ const apiAdminLogin = (email: string, password: string) =>
 const apiGetQuestions = (classNum?: number) =>
   axiosInstance.get(classNum ? `/questions?class=${classNum}` : "/questions");
 
-const apiAddQuestion = (data: { question: string; class: number; options: any[]; correctOptionId: string }) =>
+const apiAddQuestion = (data: { question: string; class: number; options: QuizOption[]; correctOptionId: string }) =>
   axiosInstance.post("/questions", data);
 
 const apiUpdateQuestion = (id: string, data: any) =>
@@ -151,14 +210,23 @@ export default function QuizPage() {
   const [adminSearch, setAdminSearch] = useState("");
   const [editingQ, setEditingQ] = useState<QuizQuestion | null>(null);
   const [adminLoading, setAdminLoading] = useState(false);
-  const [questionCounts, setQuestionCounts] = useState<Record<number, number>>({});
+  const [questionCounts, setQuestionCounts] = useState<QuestionCounts>({});
   const [studentsList, setStudentsList] = useState<StudentData[]>([]);
   const [studentClassFilter, setStudentClassFilter] = useState("all");
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
-  const [stats, setStats] = useState({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
+  const [stats, setStats] = useState<Stats>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
+
+  // Axios token management
+  const setAuthToken = (token: string | null) => {
+    if (token) {
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete axiosInstance.defaults.headers.common['Authorization'];
+    }
+  };
 
   // Initialize on mount
   useEffect(() => {
@@ -167,11 +235,13 @@ export default function QuizPage() {
     const savedUser = JSON.parse(localStorage.getItem("user") || "null");
 
     if (adminToken) {
+      setAuthToken(adminToken);
       setIsAdmin(true);
       setView("admin-panel");
       loadAdminData();
       loadAdminQuestions();
     } else if (token && savedUser) {
+      setAuthToken(token);
       setUser(savedUser);
       setView(savedUser.quizAttempted ? "result" : "quiz");
       loadQuestions(savedUser.class);
@@ -196,7 +266,7 @@ export default function QuizPage() {
       const [studentsData, statsData, countsData] = await Promise.all([
         apiGetStudents(),
         apiGetStats(),
-        apiGetQuestionCounts().catch(() => ({ data: {} })),
+        apiGetQuestionCounts().catch(() => ({ data: { counts: {} } })),
       ]);
       setStudentsList(studentsData.data?.students || []);
       setStats(statsData.data?.stats || { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
@@ -217,7 +287,7 @@ export default function QuizPage() {
   };
 
   // ============ AUTH HANDLERS ============
-  const handleRegister = async (e: FormEvent) => {
+  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim()) {
       toast.error("All fields are required");
@@ -256,7 +326,7 @@ export default function QuizPage() {
     setLoading(false);
   };
 
-  const handleLogin = async (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!form.email.trim() || !form.password.trim()) {
       toast.error("Email and password are required");
@@ -268,6 +338,7 @@ export default function QuizPage() {
       const u = data.user || data;
       localStorage.setItem("user", JSON.stringify(u));
       localStorage.setItem("token", data.token);
+      setAuthToken(data.token);
       setUser(u);
       setForm({ ...form, password: "" });
       toast.success("Login successful");
@@ -279,7 +350,7 @@ export default function QuizPage() {
     setLoading(false);
   };
 
-  const handleChangeClass = async (e: FormEvent) => {
+  const handleChangeClass = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!form.email.trim() || !form.password.trim() || !form.newClass.trim()) {
       toast.error("All fields are required");
@@ -302,14 +373,15 @@ export default function QuizPage() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setAuthToken(null);
     setUser(null);
     setView("landing");
     toast.info("Logged out");
   };
 
-  const handleAdminLogin = async (e: FormEvent) => {
+  const handleAdminLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget as HTMLFormElement);
+    const fd = new FormData(e.currentTarget);
     const email = fd.get("email") as string;
     const pass = fd.get("password") as string;
     if (!email.trim() || !pass.trim()) {
@@ -320,10 +392,11 @@ export default function QuizPage() {
     try {
       const { data } = await apiAdminLogin(email.trim(), pass.trim());
       localStorage.setItem("adminToken", data.token);
+      setAuthToken(data.token);
       setIsAdmin(true);
       setView("admin-panel");
       toast.success("Admin access granted");
-      (e.currentTarget as HTMLFormElement).reset();
+      (e.currentTarget).reset();
       await loadAdminData();
       await loadAdminQuestions();
     } catch (err: any) {
@@ -334,6 +407,7 @@ export default function QuizPage() {
 
   const handleAdminLogout = () => {
     localStorage.removeItem("adminToken");
+    setAuthToken(null);
     setIsAdmin(false);
     setView("landing");
     toast.info("Admin logged out");
@@ -387,9 +461,9 @@ export default function QuizPage() {
   };
 
   // ============ ADMIN HANDLERS ============
-  const handleAdminSave = async (data: { question: string; class: number; options: string[]; correctIdx: number; }) => {
+  const handleAdminSave = async (data: AdminQuestionFormData) => {
     setAdminLoading(true);
-    const opts = data.options.map((t, i) => ({ id: String.fromCharCode(97 + i) as "a" | "b" | "c", text: t }));
+    const opts: QuizOption[] = data.options.map((t, i) => ({ id: String.fromCharCode(97 + i) as "a" | "b" | "c", text: t }));
     try {
       if (editingQ) {
         await apiUpdateQuestion(editingQ._id, {
@@ -409,7 +483,7 @@ export default function QuizPage() {
         toast.success("Question added");
       }
       await loadAdminQuestions();
-      const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: {} }));
+      const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: { counts: {} } }));
       setQuestionCounts(counts?.counts || {});
       setEditingQ(null);
     } catch (err: any) {
@@ -423,7 +497,7 @@ export default function QuizPage() {
     try {
       await apiDeleteQuestion(id);
       await loadAdminQuestions();
-      const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: {} }));
+      const { data: counts } = await apiGetQuestionCounts().catch(() => ({ data: { counts: {} } }));
       setQuestionCounts(counts?.counts || {});
       toast.success("Deleted");
     } catch (err: any) {
@@ -445,7 +519,7 @@ export default function QuizPage() {
   });
 
   // ============ SUB-COMPONENTS ============
-  const ClassSelect = ({ value, onChange, label, disabled, showAll }: { value: string; onChange: (value: string) => void; label?: string; disabled?: boolean; showAll?: boolean }) => (
+  const ClassSelect: React.FC<ClassSelectProps> = ({ value, onChange, label, disabled, showAll }) => (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
       <Select value={value} onValueChange={onChange} disabled={disabled}>
@@ -462,7 +536,7 @@ export default function QuizPage() {
     </div>
   );
 
-  const QuestionCard = ({ q, selected, onSelect, showResult, num }: any) => (
+  const QuestionCard: React.FC<QuestionCardProps> = ({ q, selected, onSelect, showResult, num }) => (
     <Card className={showResult ? "border-2 border-primary/50" : ""}>
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-start gap-3">
@@ -490,7 +564,7 @@ export default function QuizPage() {
     </Card>
   );
 
-  const ResultCard = ({ score, total, wrong, cls }: any) => {
+  const ResultCard: React.FC<ResultCardProps> = ({ score, total, wrong, cls }) => {
     const pct = total > 0 ? Math.round((score / total) * 100) : 0;
     const msg = pct >= 70 ? { t: "Great! 👏", c: "text-green-600" } : pct >= 50 ? { t: "Good! 👍", c: "text-yellow-600" } : { t: "Practice! 📚", c: "text-orange-600" };
     return (
@@ -512,7 +586,7 @@ export default function QuizPage() {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><XCircle className="w-5 h-5" /> Mistakes ({wrong.length})</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              {wrong.map((w: any, i: number) => (
+              {wrong.map((w: WrongAnswer, i: number) => (
                 <div key={i} className="p-4 rounded-lg bg-destructive/5 border border-destructive/20">
                   <p className="font-medium"><span className="text-muted-foreground">Q{i + 1}:</span> {w.questionText}</p>
                   <div className="grid sm:grid-cols-2 gap-2 text-sm pl-2 mt-2">
@@ -542,14 +616,14 @@ export default function QuizPage() {
     );
   };
 
-  const AdminQuestionForm = ({ initial, onSave, onCancel }: any) => {
+  const AdminQuestionForm: React.FC<AdminQuestionFormProps> = ({ initial, onSave, onCancel, adminLoading }) => {
     const [f, setF] = useState({
       question: initial?.question || "",
       class: initial?.class?.toString() || "1",
-      options: initial?.options?.map((o: any) => o.text) || ["", "", ""],
-      correctIdx: initial ? initial.options.findIndex((o: any) => o.id === initial.correctOptionId) : 0,
+      options: initial?.options?.map((o: QuizOption) => o.text) || ["", "", ""],
+      correctIdx: initial ? initial.options.findIndex((o: QuizOption) => o.id === initial.correctOptionId) : 0,
     });
-    const submit = (e: FormEvent) => {
+    const submit = (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       if (!f.question.trim() || f.options.some((o: string) => !o.trim())) {
         toast.error("Fill all fields");
@@ -561,7 +635,7 @@ export default function QuizPage() {
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-2">
           <Label>Question *</Label>
-          <Textarea value={f.question} onChange={(e: any) => setF({ ...f, question: e.target.value })} placeholder="Enter question..." rows={3} required />
+          <Textarea value={f.question} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setF({ ...f, question: e.target.value })} placeholder="Enter question..." rows={3} required />
         </div>
         <ClassSelect value={f.class} onChange={(v: string) => setF({ ...f, class: v })} label="Class *" />
         <div className="space-y-3">
@@ -569,7 +643,7 @@ export default function QuizPage() {
           {f.options.map((opt: string, idx: number) => (
             <div key={idx} className="flex items-center gap-3 p-2 rounded hover:bg-secondary/30">
               <input type="radio" name="correct" checked={f.correctIdx === idx} onChange={() => setF({ ...f, correctIdx: idx })} className="w-4 h-4" />
-              <Input value={opt} onChange={(e: any) => { const o = [...f.options]; o[idx] = e.target.value; setF({ ...f, options: o }); }} placeholder={`Option ${String.fromCharCode(97 + idx)}`} required />
+              <Input value={opt} onChange={(e: ChangeEvent<HTMLInputElement>) => { const o = [...f.options]; o[idx] = e.target.value; setF({ ...f, options: o }); }} placeholder={`Option ${String.fromCharCode(97 + idx)}`} required />
               <span className="text-sm text-muted-foreground w-5">{String.fromCharCode(97 + idx)}</span>
             </div>
           ))}
@@ -583,7 +657,7 @@ export default function QuizPage() {
     );
   };
 
-  const StudentDetailsModal = ({ student, onClose }: { student: StudentData | null; onClose: () => void }) => {
+  const StudentDetailsModal: React.FC<StudentDetailsModalProps> = ({ student, onClose }) => {
     if (!student) return null;
     const totalQuestions = questions.length || 10;
     const percentage = student.quizScore ? Math.round((student.quizScore / totalQuestions) * 100) : 0;
@@ -702,15 +776,15 @@ export default function QuizPage() {
               <>
                 <div className="space-y-2">
                   <Label>Name</Label>
-                  <Input value={form.name} onChange={(e: any) => setForm({ ...form, name: e.target.value })} placeholder="Your name" required />
+                  <Input value={form.name} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })} placeholder="Your name" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input type="email" value={form.email} onChange={(e: any) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
+                  <Input type="email" value={form.email} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Password</Label>
-                  <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} required />
+                  <Input type="password" value={form.password} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} required />
                 </div>
                 <ClassSelect value={form.class} onChange={(v: string) => setForm({ ...form, class: v })} label="Your Class" />
               </>
@@ -719,11 +793,11 @@ export default function QuizPage() {
               <>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input type="email" value={form.email} onChange={(e: any) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
+                  <Input type="email" value={form.email} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Password</Label>
-                  <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required />
+                  <Input type="password" value={form.password} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required />
                 </div>
               </>
             )}
@@ -731,11 +805,11 @@ export default function QuizPage() {
               <>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input type="email" value={form.email} onChange={(e: any) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
+                  <Input type="email" value={form.email} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Password</Label>
-                  <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required />
+                  <Input type="password" value={form.password} onChange={(e: ChangeEvent<HTMLInputElement>) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required />
                 </div>
                 <ClassSelect value={form.newClass} onChange={(v: string) => setForm({ ...form, newClass: v })} label="New Class" />
               </>
@@ -839,7 +913,7 @@ export default function QuizPage() {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input placeholder="Search questions..." value={adminSearch} onChange={(e: any) => setAdminSearch(e.target.value)} className="pl-9" />
+                    <Input placeholder="Search questions..." value={adminSearch} onChange={(e: ChangeEvent<HTMLInputElement>) => setAdminSearch(e.target.value)} className="pl-9" />
                   </div>
                   <ClassSelect value={adminFilter} onChange={setAdminFilter} showAll label="" />
                   <Dialog>
@@ -848,7 +922,7 @@ export default function QuizPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader><DialogTitle>Add Question</DialogTitle></DialogHeader>
-                      <AdminQuestionForm initial={null} onSave={handleAdminSave} onCancel={() => {}} />
+                      <AdminQuestionForm initial={null} onSave={handleAdminSave} onCancel={() => {}} adminLoading={adminLoading} />
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -875,7 +949,7 @@ export default function QuizPage() {
                                   </DialogTrigger>
                                   <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                                     <DialogHeader><DialogTitle>Edit Question</DialogTitle></DialogHeader>
-                                    <AdminQuestionForm initial={editingQ} onSave={handleAdminSave} onCancel={() => setEditingQ(null)} />
+                                    <AdminQuestionForm initial={editingQ} onSave={handleAdminSave} onCancel={() => setEditingQ(null)} adminLoading={adminLoading} />
                                   </DialogContent>
                                 </Dialog>
                                 <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleAdminDelete(q._id)}><Trash className="w-4 h-4" /></Button>
@@ -916,7 +990,7 @@ export default function QuizPage() {
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Input placeholder="Search by name or email..." value={studentSearch} onChange={(e: any) => setStudentSearch(e.target.value)} className="pl-9" />
+                    <Input placeholder="Search by name or email..." value={studentSearch} onChange={(e: ChangeEvent<HTMLInputElement>) => setStudentSearch(e.target.value)} className="pl-9" />
                   </div>
                   <ClassSelect value={studentClassFilter} onChange={setStudentClassFilter} showAll label="" />
                 </div>
