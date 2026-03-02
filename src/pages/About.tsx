@@ -134,7 +134,41 @@ const About = () => {
                 Our emblem is more than just a picture; it tells the story of how we care for your child.
               </p>
               <div className="space-y-3 sm:space-y-4">
-                {/* Emblem details */}
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Shield</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Just like a shield protects a soldier, we protect and care for your child's growing mind.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Award className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Lions</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">These represent strength and character. We teach children to be brave, respectful, and disciplined.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <BookOpenCheck className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Open Books</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">This means learning is a joy. We want children to be curious and truly understand what they learn, not just memorize it.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Globe</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">We prepare our students to be successful anywhere in the world while staying connected to their roots.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <PenTool className="w-5 h-5 sm:w-6 sm:h-6 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm sm:text-base font-semibold text-foreground">The Pen & Crown</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">The pen at the top shows that clear thinking and honest words are the keys to becoming a true leader.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -143,17 +177,56 @@ const About = () => {
 
       {/* VERITAS Section */}
       <section className="py-10 sm:py-14 md:py-20 bg-primary text-primary-foreground">
-        {/* VERITAS content */}
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 animate-fade-in font-serif">VERITAS</h2>
+          <p className="text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 opacity-90 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>Our Motto: Truth</p>
+          <div className="max-w-3xl mx-auto animate-fade-in-up px-2" style={{ animationDelay: "0.2s" }}>
+            <p className="text-sm sm:text-base md:text-lg leading-relaxed opacity-90 mb-4">
+              At Scholar Educational Campus, "Veritas" means we are honest and sincere in everything we do—from how we teach to how we nurture your child.
+            </p>
+            <p className="text-sm sm:text-base md:text-lg leading-relaxed opacity-90 font-semibold">
+              We don't just prepare students for exams; we prepare them for life.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Values Section */}
       <section className="py-10 sm:py-14 md:py-20">
-        {/* Values content */}
+        <div className="container mx-auto px-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground text-center mb-6 sm:mb-8 md:mb-12 animate-fade-in">Our Core Values</h2>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+            {values.map((value, index) => (
+              <div key={value.title} className="text-center p-3 sm:p-4 md:p-6 bg-card rounded-lg card-hover animate-fade-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+                <value.icon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-primary mx-auto mb-2 sm:mb-3 md:mb-4" />
+                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-foreground mb-1 sm:mb-2">{value.title}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">{value.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Vision & Mission */}
       <section className="py-10 sm:py-14 md:py-20 bg-secondary/30">
-        {/* Vision & Mission content */}
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 lg:gap-12">
+            <div className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-lg animate-slide-in-left">
+              <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mb-3 sm:mb-4" />
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-3 md:mb-4">Our Vision</h3>
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">
+                To be a globally recognized institution that nurtures future leaders, innovators, and responsible citizens who contribute positively to society.
+              </p>
+            </div>
+            <div className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-lg animate-slide-in-right">
+              <Target className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 text-primary mb-3 sm:mb-4" />
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-2 sm:mb-3 md:mb-4">Our Mission</h3>
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground leading-relaxed">
+                To provide holistic education that combines academic excellence with character development, encouraging curiosity, critical thinking, and creativity.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Leadership Section */}

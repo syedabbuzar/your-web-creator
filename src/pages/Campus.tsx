@@ -19,8 +19,10 @@ const iconOptions = Object.keys(iconMap);
 const Campus = () => {
   const { isAdmin } = useAdmin();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
   const [gallery, setGallery] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
   const [editingGallery, setEditingGallery] = useState<any | null>(null);
   const [galleryForm, setGalleryForm] = useState({ src: "", alt: "" });
@@ -30,7 +32,7 @@ const Campus = () => {
       const galleryResponse = await axiosInstance.get("/gallery");
       setGallery(galleryResponse.data || []);
     } catch (error) {
-      toast.error("Failed to load gallery images");
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
@@ -38,6 +40,7 @@ const Campus = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Gallery CRUD
   const openAddGallery = () => {
     setEditingGallery(null);
     setGalleryForm({ src: "", alt: "" });
