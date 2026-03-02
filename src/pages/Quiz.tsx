@@ -97,12 +97,12 @@ ${student.wrongAnswers && student.wrongAnswers.length > 0 ? `
 };
 
 // ============ API FUNCTIONS ============
-const apiRegister = (data: { name: string; email: string; password: string; class: number; confirmPassword?: string }) =>
+const apiRegister = (data: { name: string; email: string; password: string; class: number }) =>
   axiosInstance.post("/auth/register", {
-    ...data,
+    name: data.name,
+    email: data.email,
+    password: data.password,
     class: data.class,
-    classNum: data.class,
-    studentClass: data.class,
   });
 const apiLogin = (email: string, password: string) =>
   axiosInstance.post("/auth/login", { email, password });
@@ -280,7 +280,6 @@ export default function QuizPage() {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
-        confirmPassword: form.confirm.trim(),
         class: selectedClass,
       });
       toast.success("Registered! Please login.");
