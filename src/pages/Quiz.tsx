@@ -186,7 +186,7 @@ export default function QuizPage() {
   const [stats, setStats] = useState<{ totalStudents: number; attemptedQuiz: number; notAttempted: number }>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
 
   // Form State
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
 
   // Initialize on mount
@@ -246,12 +246,8 @@ export default function QuizPage() {
   // ============ AUTH HANDLERS ============
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.confirm.trim() || !form.class.trim()) {
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim()) {
       toast.error("All fields are required");
-      return;
-    }
-    if (form.password !== form.confirm) {
-      toast.error("Passwords do not match");
       return;
     }
     if (form.password.length < 6) {
@@ -284,7 +280,7 @@ export default function QuizPage() {
       });
       toast.success("Registered! Please login.");
       setView("login");
-      setForm({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" });
+      setForm({ name: "", email: "", password: "", class: "", newClass: "" });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Registration failed");
     }
@@ -695,7 +691,7 @@ export default function QuizPage() {
         <p className="text-muted-foreground max-w-xl mx-auto">Practice quizzes for Class 1-10. Register, attempt, and track progress.</p>
       </div>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" }); setView("register"); }}>
+        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>
           <User className="w-4 h-4 mr-2" />Register
         </Button>
         <Button size="lg" variant="outline" onClick={() => { setForm({ ...form, password: "" }); setView("login"); }}>Login</Button>
@@ -745,10 +741,6 @@ export default function QuizPage() {
                   <Label>Password</Label>
                   <Input type="password" value={form.password} onChange={(e: any) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} required />
                 </div>
-                <div className="space-y-2">
-                  <Label>Confirm Password</Label>
-                  <Input type="password" value={form.confirm} onChange={(e: any) => setForm({ ...form, confirm: e.target.value })} placeholder="••••••" required />
-                </div>
                 <ClassSelect value={form.class} onChange={(v: string) => setForm({ ...form, class: v })} label="Your Class" />
               </>
             )}
@@ -784,7 +776,7 @@ export default function QuizPage() {
           <div className="mt-4 text-center space-y-2 text-sm">
             {view === "login" && (
               <>
-                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", confirm: "", class: "", newClass: "" }); setView("register"); }}>Register</Button></p>
+                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>Register</Button></p>
                 <p>Wrong class? <Button variant="link" className="p-0 h-auto" onClick={() => setView("change-class")}>Change here</Button></p>
               </>
             )}
