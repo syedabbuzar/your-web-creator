@@ -10,6 +10,31 @@ import { useAdmin } from "@/contexts/AdminContext";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 
+// ============ TYPES ============
+interface ExamSchedule {
+  _id: string;
+  exam: string;
+  classes: string;
+  start_date: string;
+  end_date: string;
+}
+
+interface Result {
+  _id: string;
+  title: string;
+  description: string;
+  status: "upcoming" | "published";
+  result_date: string;
+}
+
+interface Resource {
+  _id: string;
+  title: string;
+  file_type: string;
+  file_size: string;
+  file_url: string;
+}
+
 const guidelines = [
   "Students must carry their hall tickets to the examination center.",
   "Reach the examination center 30 minutes before the exam starts.",
@@ -21,24 +46,24 @@ const guidelines = [
 
 const Exam = () => {
   const { isAdmin } = useAdmin();
-  const [examSchedule, setExamSchedule] = useState<any[]>([]);
-  const [results, setResults] = useState<any[]>([]);
-  const [resources, setResources] = useState<any[]>([]);
+  const [examSchedule, setExamSchedule] = useState<ExamSchedule[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Schedule dialog
   const [scheduleDialog, setScheduleDialog] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<any>(null);
+  const [editingSchedule, setEditingSchedule] = useState<ExamSchedule | null>(null);
   const [scheduleForm, setScheduleForm] = useState({ exam: "", classes: "", start_date: "", end_date: "" });
 
   // Result dialog
   const [resultDialog, setResultDialog] = useState(false);
-  const [editingResult, setEditingResult] = useState<any>(null);
-  const [resultForm, setResultForm] = useState({ title: "", description: "", status: "upcoming", result_date: "" });
+  const [editingResult, setEditingResult] = useState<Result | null>(null);
+  const [resultForm, setResultForm] = useState({ title: "", description: "", status: "upcoming" as "upcoming" | "published", result_date: "" });
 
   // Resource dialog
   const [resourceDialog, setResourceDialog] = useState(false);
-  const [editingResource, setEditingResource] = useState<any>(null);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [resourceForm, setResourceForm] = useState({ title: "", file_type: "PDF", file_size: "", file_url: "" });
   const [resourceFile, setResourceFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -47,9 +72,9 @@ const Exam = () => {
   const fetchData = async () => {
     try {
       const [schedRes, resRes, resourcesRes] = await Promise.all([
-        axiosInstance.get("/exam-schedules"), // Replace with actual endpoint if different
-        axiosInstance.get("/exam/results"), // Updated to use new endpoint
-        axiosInstance.get("/exam/resources"), // Updated to use new endpoint
+        axiosInstance.get("/exam-schedules"),
+        axiosInstance.get("/exam/results"),
+        axiosInstance.get("/exam/resources"),
       ]);
       setExamSchedule(schedRes.data || []);
       setResults(resRes.data || []);
@@ -70,9 +95,9 @@ const Exam = () => {
     setResultDialog(true);
   };
 
-  const openEditResult = (r: any) => {
+  const openEditResult = (r: Result) => {
     setEditingResult(r);
-    setResultForm({ title: r.title, description: r.description, status: r.status, result_date: r.result_date || "" });
+    setResultForm({ title: r.title, description: r.description, status: r.status, result_date: r.result_date });
     setResultDialog(true);
   };
 
@@ -114,7 +139,7 @@ const Exam = () => {
     setResourceDialog(true);
   };
 
-  const openEditResource = (r: any) => {
+  const openEditResource = (r: Resource) => {
     setEditingResource(r);
     setResourceForm({ title: r.title, file_type: r.file_type, file_size: r.file_size, file_url: r.file_url });
     setResourceDialog(true);
@@ -123,7 +148,6 @@ const Exam = () => {
   const uploadFile = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    // Replace with your actual upload endpoint
     const { data } = await axiosInstance.post("/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -283,7 +307,7 @@ const Exam = () => {
               <div className="space-y-1.5"><Label className="text-xs sm:text-sm">Result Date</Label><Input value={resultForm.result_date} onChange={e => setResultForm({ ...resultForm, result_date: e.target.value })} placeholder="e.g. August 1, 2025" className="text-sm" /></div>
               <div className="space-y-1.5">
                 <Label className="text-xs sm:text-sm">Status</Label>
-                <select value={resultForm.status} onChange={e => setResultForm({ ...resultForm, status: e.target.value })} className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm">
+                <select value={resultForm.status} onChange={e => setResultForm({ ...resultForm, status: e.target.value as "upcoming" | "published" })} className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-xs sm:text-sm">
                   <option value="upcoming">Upcoming</option>
                   <option value="published">Published</option>
                 </select>
@@ -327,6 +351,7 @@ const Exam = () => {
                   type="file"
                   onChange={async (e) => {
                     if (e.target.files?.[0]) {
+                      setResourceFile(e.target.files[0]);
                       setUploading(true);
                       const url = await uploadFile(e.target.files[0]);
                       setResourceForm({ ...resourceForm, file_url: url });
