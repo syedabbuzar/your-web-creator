@@ -1,14 +1,20 @@
 import Layout from "@/components/Layout";
-import { Building, ImagePlus, Pencil, Trash2 } from "lucide-react";
+import { Building, Book, Beaker, Music, Dumbbell, Monitor, Trees, Utensils, Plus, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
 import ImageUploadButton from "@/components/ImageUploadButton";
+
+const iconMap: Record<string, any> = {
+  Book, Beaker, Monitor, Dumbbell, Music, Trees, Utensils, Building,
+};
+const iconOptions = Object.keys(iconMap);
 
 const Campus = () => {
   const { isAdmin } = useAdmin();
