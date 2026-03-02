@@ -7,18 +7,17 @@ const axiosInstance = axios.create({
   },
 });
 
-// 🔥 ADD THIS INTERCEPTOR (MAIN FIX)
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
+// 🔥 MOST IMPORTANT FIX
+axiosInstance.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem("token") ||
+    localStorage.getItem("adminToken");
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // ✅ TOKEN ATTACHED
-    }
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  return config;
+});
 
 export default axiosInstance;
