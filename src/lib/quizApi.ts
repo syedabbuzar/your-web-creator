@@ -32,7 +32,13 @@ const adminHeaders = () => ({
 
 // ============ AUTH API ============
 export const apiRegister = async (data: { name: string; email: string; password: string; class: number }) => {
-  const res = await axiosInstance.post("/auth/register", data);
+  // ✅ FIX: role add kiya (backend requirement)
+  const payload = {
+    ...data,
+    role: "student", // ✅ REQUIRED FIX
+  };
+
+  const res = await axiosInstance.post("/auth/register", payload);
   return res.data;
 };
 
