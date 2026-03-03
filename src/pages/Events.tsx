@@ -27,10 +27,14 @@ const Events = () => {
     image: "",
   });
 
+  const extractEvents = (payload: any) => payload?.events || payload?.data || payload || [];
+  const getEventId = (event: any) => event?._id || event?.id;
+
   const fetchEvents = async () => {
     try {
       const response = await axiosInstance.get("/events");
-      setEvents(response.data);
+      const list = extractEvents(response.data);
+      setEvents(Array.isArray(list) ? list : []);
     } catch (error) {
       toast.error("Failed to load events");
     } finally {
@@ -73,8 +77,9 @@ const Events = () => {
     }
 
     try {
-      if (editingEvent) {
-        await axiosInstance.put(`/events/${editingEvent._id}`, form);
+      const eventId = editingEvent ? getEventId(editingEvent) : null;
+      if (editingEvent && eventId) {
+        await axiosInstance.put(`/events/${eventId}`, form);
         toast.success("Event updated!");
       } else {
         await axiosInstance.post("/events", form);
@@ -131,42 +136,45 @@ const Events = () => {
             <p className="text-center text-muted-foreground">Loading events...</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {events.map((event, index) => (
-                <div key={event._id} className="bg-card rounded-lg shadow-lg overflow-hidden animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
-                  {isAdmin && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                      <button onClick={() => openEdit(event)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
-                        <Pencil className="w-3.5 h-3.5 text-primary" />
-                      </button>
-                      <button onClick={() => handleDelete(event._id)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      </button>
+              {events.map((event, index) => {
+                const eventId = getEventId(event);
+                return (
+                  <div key={eventId || index} className="bg-card rounded-lg shadow-lg overflow-hidden animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
+                    {isAdmin && (
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button onClick={() => openEdit(event)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
+                          <Pencil className="w-3.5 h-3.5 text-primary" />
+                        </button>
+                        <button onClick={() => eventId && handleDelete(eventId)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </button>
+                      </div>
+                    )}
+                    <div className="h-40 sm:h-48 overflow-hidden">
+                      <OptimizedImage src={event.image} alt={event.title} className="w-full h-full object-cover" />
                     </div>
-                  )}
-                  <div className="h-40 sm:h-48 overflow-hidden">
-                    <OptimizedImage src={event.image} alt={event.title} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-[10px] sm:text-xs font-medium">
-                        <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                        {event.category}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                        <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                        {event.date}
-                      </span>
+                    <div className="p-4 sm:p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-[10px] sm:text-xs font-medium">
+                          <Tag className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          {event.category}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                          <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                          {event.date}
+                        </span>
+                      </div>
+                      <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground mb-1.5 sm:mb-2">{event.title}</h3>
+                      <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground line-clamp-2">{event.description}</p>
+                      <Link to={eventId ? `/event/${eventId}` : "/events"} className="mt-3 sm:mt-4 inline-block">
+                        <Button variant="outline" className="text-[10px] sm:text-xs border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-3 sm:px-4 py-1.5 sm:py-2">
+                          View Details
+                        </Button>
+                      </Link>
                     </div>
-                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-foreground mb-1.5 sm:mb-2">{event.title}</h3>
-                    <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground line-clamp-2">{event.description}</p>
-                    <Link to={`/events/${event._id}`} className="mt-3 sm:mt-4 inline-block">
-                      <Button variant="outline" className="text-[10px] sm:text-xs border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full px-3 sm:px-4 py-1.5 sm:py-2">
-                        View Details
-                      </Button>
-                    </Link>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
