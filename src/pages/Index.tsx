@@ -6,7 +6,7 @@ import FloatingActions from "@/components/FloatingActions";
 import EventCard from "@/components/EventCard";
 import HeroCarousel from "@/components/HeroCarousel";
 import { ArrowRight, BookOpen, Users, Award, GraduationCap } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import axiosInstance from "@/lib/axios";
 
 const stats = [
   { icon: GraduationCap, value: "50+", label: "Faculty" },
@@ -15,13 +15,21 @@ const stats = [
   { icon: Users, value: "10+", label: "Smart Class" },
 ];
 
+const getEventId = (event: any) => event?._id || event?.id;
+const extractEvents = (payload: any) => payload?.events || payload?.data || payload || [];
+
 const Index = () => {
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data } = await supabase.from("events").select("*").order("sort_order").limit(3);
-      setEvents(data || []);
+      try {
+        const response = await axiosInstance.get("/events");
+        const list = extractEvents(response.data);
+        setEvents(Array.isArray(list) ? list.slice(0, 3) : []);
+      } catch {
+        setEvents([]);
+      }
     };
     fetchEvents();
   }, []);
@@ -105,15 +113,18 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            {events.map((event, index) => (
-              <div
-                key={event.id}
-                className="animate-fade-in-up opacity-0"
-                style={{ animationDelay: `${0.2 + index * 0.15}s`, animationFillMode: "forwards" }}
-              >
-                <EventCard id={event.id} title={event.title} description={event.description} date={event.date} image={event.image} className="hover-scale" />
-              </div>
-            ))}
+            {events.map((event, index) => {
+              const eventId = getEventId(event);
+              return (
+                <div
+                  key={eventId || index}
+                  className="animate-fade-in-up opacity-0"
+                  style={{ animationDelay: `${0.2 + index * 0.15}s`, animationFillMode: "forwards" }}
+                >
+                  <EventCard id={eventId} title={event.title} description={event.description} date={event.date} image={event.image} className="hover-scale" />
+                </div>
+              );
+            })}
           </div>
 
           <div className="text-center mt-8 sm:mt-10 md:mt-12">

@@ -27,10 +27,14 @@ const About = () => {
   const [editingLeader, setEditingLeader] = useState<any | null>(null);
   const [form, setForm] = useState({ name: "", role: "", image: "" });
 
+  const extractLeaders = (payload: any) => payload?.leaders || payload?.data || payload || [];
+  const getLeaderId = (leader: any) => leader?._id || leader?.id;
+
   const fetchLeaders = async () => {
     try {
       const response = await axiosInstance.get("/leaders");
-      setLeaders(response.data);
+      const list = extractLeaders(response.data);
+      setLeaders(Array.isArray(list) ? list : []);
     } catch (error) {
       toast.error("Failed to load leaders");
     } finally {
@@ -59,8 +63,9 @@ const About = () => {
     }
 
     try {
-      if (editingLeader) {
-        await axiosInstance.put(`/leaders/${editingLeader._id}`, form);
+      const leaderId = editingLeader ? getLeaderId(editingLeader) : null;
+      if (editingLeader && leaderId) {
+        await axiosInstance.put(`/leaders/${leaderId}`, form);
         toast.success("Leader updated!");
       } else {
         await axiosInstance.post("/leaders", {
@@ -244,25 +249,28 @@ const About = () => {
             Meet the dedicated team leading Scholar Educational Campus
           </p>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
-            {leaders.map((leader, index) => (
-              <div key={leader._id} className="text-center animate-fade-in-up relative group" style={{ animationDelay: `${0.2 + index * 0.1}s` }}>
-                {isAdmin && (
-                  <div className="absolute top-0 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    <button onClick={() => openEdit(leader)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
-                      <Pencil className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-                    </button>
-                    <button onClick={() => handleDelete(leader._id)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
-                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-destructive" />
-                    </button>
+            {leaders.map((leader, index) => {
+              const leaderId = getLeaderId(leader);
+              return (
+                <div key={leaderId || index} className="text-center animate-fade-in-up relative group" style={{ animationDelay: `${0.2 + index * 0.1}s` }}>
+                  {isAdmin && (
+                    <div className="absolute top-0 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <button onClick={() => openEdit(leader)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-secondary">
+                        <Pencil className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                      </button>
+                      <button onClick={() => leaderId && handleDelete(leaderId)} className="p-1 sm:p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10">
+                        <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 text-destructive" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 mx-auto mb-2 sm:mb-3 md:mb-4 rounded-full overflow-hidden image-zoom border-2 sm:border-4 border-primary/20">
+                    <OptimizedImage src={leader.image} alt={leader.name} className="w-full h-full object-cover" />
                   </div>
-                )}
-                <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 mx-auto mb-2 sm:mb-3 md:mb-4 rounded-full overflow-hidden image-zoom border-2 sm:border-4 border-primary/20">
-                  <OptimizedImage src={leader.image} alt={leader.name} className="w-full h-full object-cover" />
+                  <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-foreground">{leader.name}</h3>
+                  <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{leader.role}</p>
                 </div>
-                <h3 className="text-xs sm:text-sm md:text-base lg:text-lg font-bold text-foreground">{leader.name}</h3>
-                <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground">{leader.role}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

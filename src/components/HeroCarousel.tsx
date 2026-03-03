@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import OptimizedImage from "@/components/OptimizedImage";
+import axiosInstance from "@/lib/axios";
+
+const getEventId = (event: any) => event?._id || event?.id;
+const extractEvents = (payload: any) => payload?.events || payload?.data || payload || [];
 
 const HeroCarousel = () => {
   const [events, setEvents] = useState<any[]>([]);
@@ -10,8 +13,13 @@ const HeroCarousel = () => {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data } = await supabase.from("events").select("*").order("sort_order").limit(6);
-      setEvents(data || []);
+      try {
+        const response = await axiosInstance.get("/events");
+        const list = extractEvents(response.data);
+        setEvents(Array.isArray(list) ? list.slice(0, 6) : []);
+      } catch {
+        setEvents([]);
+      }
     };
     fetchEvents();
   }, []);
@@ -36,27 +44,30 @@ const HeroCarousel = () => {
 
   return (
     <section className="relative w-full h-[200px] sm:h-[280px] md:h-[380px] lg:h-[450px] xl:h-[520px] overflow-hidden">
-      {events.map((event: any, index: number) => (
-        <Link
-          key={event.id}
-          to={`/event/${event.id}`}
-          className={`absolute inset-0 transition-opacity duration-700 ${
-            index === current ? "opacity-100 z-10" : "opacity-0 z-0"
-          }`}
-        >
-          <OptimizedImage
-            src={event.image}
-            alt={event.title}
-            className="w-full h-full object-cover object-center"
-            loading={index === 0 ? "eager" : "lazy"}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-          <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-4 sm:left-6 md:left-8 right-4 sm:right-6 md:right-8 z-20">
-            <p className="text-[10px] sm:text-xs md:text-sm text-white/80 uppercase tracking-wider mb-1 sm:mb-2">{event.date}</p>
-            <h3 className="text-sm sm:text-base md:text-xl lg:text-2xl font-bold text-white leading-tight line-clamp-2">{event.title}</h3>
-          </div>
-        </Link>
-      ))}
+      {events.map((event: any, index: number) => {
+        const eventId = getEventId(event);
+        return (
+          <Link
+            key={eventId || index}
+            to={eventId ? `/event/${eventId}` : "/events"}
+            className={`absolute inset-0 transition-opacity duration-700 ${
+              index === current ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
+          >
+            <OptimizedImage
+              src={event.image}
+              alt={event.title}
+              className="w-full h-full object-cover object-center"
+              loading={index === 0 ? "eager" : "lazy"}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-4 sm:left-6 md:left-8 right-4 sm:right-6 md:right-8 z-20">
+              <p className="text-[10px] sm:text-xs md:text-sm text-white/80 uppercase tracking-wider mb-1 sm:mb-2">{event.date}</p>
+              <h3 className="text-sm sm:text-base md:text-xl lg:text-2xl font-bold text-white leading-tight line-clamp-2">{event.title}</h3>
+            </div>
+          </Link>
+        );
+      })}
 
       <button onClick={(e) => { e.preventDefault(); prev(); }} className="absolute left-2 sm:left-3 md:left-4 top-1/2 -translate-y-1/2 z-30 w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-colors" aria-label="Previous slide">
         <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />

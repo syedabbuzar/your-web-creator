@@ -9,21 +9,38 @@ const AdminContext = createContext<AdminContextType>({ isAdmin: false, toggleAdm
 
 export const useAdmin = () => useContext(AdminContext);
 
+const getAdminToken = () =>
+  localStorage.getItem("adminToken") || localStorage.getItem("scholar_admin_token");
+
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => Boolean(getAdminToken()));
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key === "A") {
-        setIsAdmin((prev) => !prev);
-      }
+    const syncAdminState = () => setIsAdmin(Boolean(getAdminToken()));
+
+    syncAdminState();
+    window.addEventListener("storage", syncAdminState);
+    window.addEventListener("focus", syncAdminState);
+
+    return () => {
+      window.removeEventListener("storage", syncAdminState);
+      window.removeEventListener("focus", syncAdminState);
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const toggleAdmin = () => {
+    if (isAdmin) {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("scholar_admin_token");
+      setIsAdmin(false);
+      return;
+    }
+
+    setIsAdmin(Boolean(getAdminToken()));
+  };
+
   return (
-    <AdminContext.Provider value={{ isAdmin, toggleAdmin: () => setIsAdmin((p) => !p) }}>
+    <AdminContext.Provider value={{ isAdmin, toggleAdmin }}>
       {children}
     </AdminContext.Provider>
   );

@@ -27,10 +27,14 @@ const Campus = () => {
   const [editingGallery, setEditingGallery] = useState<any | null>(null);
   const [galleryForm, setGalleryForm] = useState({ src: "", alt: "" });
 
+  const extractGallery = (payload: any) => payload?.gallery || payload?.data || payload || [];
+  const getGalleryId = (item: any) => item?._id || item?.id;
+
   const fetchData = async () => {
     try {
       const galleryResponse = await axiosInstance.get("/gallery");
-      setGallery(galleryResponse.data || []);
+      const list = extractGallery(galleryResponse.data);
+      setGallery(Array.isArray(list) ? list : []);
     } catch (error) {
       toast.error("Failed to load data");
     } finally {
@@ -59,8 +63,9 @@ const Campus = () => {
       return;
     }
     try {
-      if (editingGallery) {
-        await axiosInstance.put(`/gallery/${editingGallery._id}`, galleryForm);
+      const galleryId = editingGallery ? getGalleryId(editingGallery) : null;
+      if (editingGallery && galleryId) {
+        await axiosInstance.put(`/gallery/${galleryId}`, galleryForm);
         toast.success("Gallery image updated!");
       } else {
         await axiosInstance.post("/gallery", galleryForm);
@@ -149,29 +154,32 @@ const Campus = () => {
             Take a visual tour of our beautiful campus
           </p>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-            {gallery.map((image, index) => (
-              <div
-                key={image._id}
-                className="relative group image-zoom rounded-lg overflow-hidden shadow-lg cursor-pointer animate-fade-in-up"
-                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
-                onClick={() => setSelectedImage(image.src)}
-              >
-                {isAdmin && (
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
-                    <button onClick={(e) => { e.stopPropagation(); openEditGallery(image); }} className="p-1 bg-card rounded-full shadow-md hover:bg-secondary">
-                      <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteGallery(image._id); }} className="p-1 bg-card rounded-full shadow-md hover:bg-destructive/10">
-                      <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-destructive" />
-                    </button>
+            {gallery.map((image, index) => {
+              const galleryId = getGalleryId(image);
+              return (
+                <div
+                  key={galleryId || index}
+                  className="relative group image-zoom rounded-lg overflow-hidden shadow-lg cursor-pointer animate-fade-in-up"
+                  style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                  onClick={() => setSelectedImage(image.src)}
+                >
+                  {isAdmin && (
+                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      <button onClick={(e) => { e.stopPropagation(); openEditGallery(image); }} className="p-1 bg-card rounded-full shadow-md hover:bg-secondary">
+                        <Pencil className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary" />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); galleryId && handleDeleteGallery(galleryId); }} className="p-1 bg-card rounded-full shadow-md hover:bg-destructive/10">
+                        <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-destructive" />
+                      </button>
+                    </div>
+                  )}
+                  <img src={image.src} alt={image.alt} className="w-full h-32 sm:h-40 md:h-52 lg:h-64 object-cover" />
+                  <div className="p-2 sm:p-3 md:p-4 bg-card">
+                    <p className="text-xs sm:text-sm font-medium text-foreground">{image.alt}</p>
                   </div>
-                )}
-                <img src={image.src} alt={image.alt} className="w-full h-32 sm:h-40 md:h-52 lg:h-64 object-cover" />
-                <div className="p-2 sm:p-3 md:p-4 bg-card">
-                  <p className="text-xs sm:text-sm font-medium text-foreground">{image.alt}</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
