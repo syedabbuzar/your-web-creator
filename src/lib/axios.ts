@@ -1,5 +1,11 @@
 import axios from "axios";
 
+const resolveAuthToken = () =>
+  localStorage.getItem("adminToken") ||
+  localStorage.getItem("token") ||
+  localStorage.getItem("scholar_admin_token") ||
+  localStorage.getItem("scholar_quiz_token");
+
 const axiosInstance = axios.create({
   baseURL: "https://scholar-backen.vercel.app/api",
   headers: {
@@ -7,11 +13,8 @@ const axiosInstance = axios.create({
   },
 });
 
-// 🔥 MOST IMPORTANT FIX
 axiosInstance.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem("token") ||
-    localStorage.getItem("adminToken");
+  const token = resolveAuthToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
