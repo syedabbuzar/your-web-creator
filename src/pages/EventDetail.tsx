@@ -16,8 +16,7 @@ const EventDetail = () => {
     const fetchEvent = async () => {
       try {
         const response = await axiosInstance.get(`/events/${id}`);
-        const payload = response.data;
-        setEvent(payload?.event || payload?.data || payload || null);
+        setEvent(response.data);
       } catch (error) {
         toast.error("Failed to load event");
       } finally {

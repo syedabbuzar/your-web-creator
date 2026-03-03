@@ -12,8 +12,7 @@ import axiosInstance from "@/lib/axios";
 
 // ============ TYPES ============
 interface ExamSchedule {
-  _id?: string;
-  id?: string;
+  _id: string;
   exam: string;
   classes: string;
   start_date: string;
@@ -21,8 +20,7 @@ interface ExamSchedule {
 }
 
 interface Result {
-  _id?: string;
-  id?: string;
+  _id: string;
   title: string;
   description: string;
   status: "upcoming" | "published";
@@ -30,8 +28,7 @@ interface Result {
 }
 
 interface Resource {
-  _id?: string;
-  id?: string;
+  _id: string;
   title: string;
   file_type: string;
   file_size: string;
@@ -72,13 +69,6 @@ const Exam = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const extractList = (payload: any, key?: string) => {
-    if (key && Array.isArray(payload?.[key])) return payload[key];
-    if (Array.isArray(payload?.data)) return payload.data;
-    return Array.isArray(payload) ? payload : [];
-  };
-  const getItemId = (item: any) => item?._id || item?.id;
-
   const fetchData = async () => {
     try {
       const [schedRes, resRes, resourcesRes] = await Promise.all([
@@ -86,9 +76,9 @@ const Exam = () => {
         axiosInstance.get("/exam/results"),
         axiosInstance.get("/exam/resources"),
       ]);
-      setExamSchedule(extractList(schedRes.data, "schedules"));
-      setResults(extractList(resRes.data, "results"));
-      setResources(extractList(resourcesRes.data, "resources"));
+      setExamSchedule(schedRes.data || []);
+      setResults(resRes.data || []);
+      setResources(resourcesRes.data || []);
     } catch (error) {
       toast.error("Failed to load data");
     } finally {
@@ -117,9 +107,8 @@ const Exam = () => {
       return;
     }
     try {
-      const resultId = editingResult ? getItemId(editingResult) : null;
-      if (editingResult && resultId) {
-        await axiosInstance.put(`/exam/results/${resultId}`, resultForm);
+      if (editingResult) {
+        await axiosInstance.put(`/exam/results/${editingResult._id}`, resultForm);
         toast.success("Result updated!");
       } else {
         await axiosInstance.post("/exam/results", resultForm);
@@ -177,9 +166,8 @@ const Exam = () => {
         file_url = await uploadFile(resourceFile);
       }
       const payload = { ...resourceForm, file_url };
-      const resourceId = editingResource ? getItemId(editingResource) : null;
-      if (editingResource && resourceId) {
-        await axiosInstance.put(`/exam/resources/${resourceId}`, payload);
+      if (editingResource) {
+        await axiosInstance.put(`/exam/resources/${editingResource._id}`, payload);
         toast.success("Resource updated!");
       } else {
         await axiosInstance.post("/exam/resources", payload);
@@ -237,28 +225,25 @@ const Exam = () => {
             )}
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
-            {results.map((result, index) => {
-              const resultId = getItemId(result);
-              return (
-                <div key={resultId || index} className="bg-card p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
-                  {isAdmin && (
-                    <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => openEditResult(result)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary"><Pencil className="w-3.5 h-3.5 text-primary" /></button>
-                      <button onClick={() => resultId && deleteResult(resultId)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10"><Trash2 className="w-3.5 h-3.5 text-destructive" /></button>
-                    </div>
-                  )}
-                  <Clock className="w-10 h-10 sm:w-12 sm:h-12 text-primary mx-auto mb-3 animate-float" />
-                  <h3 className="text-base sm:text-lg font-bold text-foreground mb-2 text-center">{result.title}</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-2 text-center">{result.description}</p>
-                  {result.result_date && <p className="text-xs text-primary font-medium text-center">{result.result_date}</p>}
-                  <div className="text-center">
-                    <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${result.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {result.status === 'published' ? 'Published' : 'Upcoming'}
-                    </span>
+            {results.map((result, index) => (
+              <div key={result._id} className="bg-card p-4 sm:p-6 rounded-lg shadow-lg animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
+                {isAdmin && (
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEditResult(result)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary"><Pencil className="w-3.5 h-3.5 text-primary" /></button>
+                    <button onClick={() => deleteResult(result._id)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10"><Trash2 className="w-3.5 h-3.5 text-destructive" /></button>
                   </div>
+                )}
+                <Clock className="w-10 h-10 sm:w-12 sm:h-12 text-primary mx-auto mb-3 animate-float" />
+                <h3 className="text-base sm:text-lg font-bold text-foreground mb-2 text-center">{result.title}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2 text-center">{result.description}</p>
+                {result.result_date && <p className="text-xs text-primary font-medium text-center">{result.result_date}</p>}
+                <div className="text-center">
+                  <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${result.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    {result.status === 'published' ? 'Published' : 'Upcoming'}
+                  </span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -278,35 +263,32 @@ const Exam = () => {
             )}
           </div>
           <div className="space-y-2 sm:space-y-3 md:space-y-4">
-            {resources.map((resource, index) => {
-              const resourceId = getItemId(resource);
-              return (
-                <div key={resourceId || index} className="flex items-center justify-between p-3 sm:p-4 bg-card rounded-lg shadow card-hover animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <FileText className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-foreground text-xs sm:text-sm">{resource.title}</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground">{resource.file_type} • {resource.file_size}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {isAdmin && (
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-                        <button onClick={() => openEditResource(resource)} className="p-1.5 hover:bg-secondary rounded"><Pencil className="w-3 h-3 text-primary" /></button>
-                        <button onClick={() => resourceId && deleteResource(resourceId)} className="p-1.5 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
-                      </div>
-                    )}
-                    {resource.file_url && (
-                      <a href={resource.file_url} target="_blank" rel="noopener noreferrer" download>
-                        <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground p-1.5 sm:p-2">
-                          <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        </Button>
-                      </a>
-                    )}
+            {resources.map((resource, index) => (
+              <div key={resource._id} className="flex items-center justify-between p-3 sm:p-4 bg-card rounded-lg shadow card-hover animate-fade-in-up relative group" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <FileText className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-primary flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-foreground text-xs sm:text-sm">{resource.title}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{resource.file_type} • {resource.file_size}</p>
                   </div>
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-1">
+                  {isAdmin && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
+                      <button onClick={() => openEditResource(resource)} className="p-1.5 hover:bg-secondary rounded"><Pencil className="w-3 h-3 text-primary" /></button>
+                      <button onClick={() => deleteResource(resource._id)} className="p-1.5 hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3 text-destructive" /></button>
+                    </div>
+                  )}
+                  {resource.file_url && (
+                    <a href={resource.file_url} target="_blank" rel="noopener noreferrer" download>
+                      <Button variant="outline" size="sm" className="hover:bg-primary hover:text-primary-foreground p-1.5 sm:p-2">
+                        <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </Button>
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
             {resources.length === 0 && !loading && (
               <p className="text-center text-muted-foreground text-sm py-4">No resources available yet.</p>
             )}
