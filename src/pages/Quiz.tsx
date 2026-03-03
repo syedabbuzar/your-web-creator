@@ -207,7 +207,14 @@ export default function QuizPage() {
   const loadQuestions = async (classNum: number) => {
     try {
       const { data } = await axiosInstance.get(`/questions?class=${classNum}`);
-      setQuestions(Array.isArray(data.questions) ? data.questions : []);
+      const list = Array.isArray(data?.questions)
+        ? data.questions
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [];
+      setQuestions(list);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to load questions");
     }
@@ -221,9 +228,9 @@ export default function QuizPage() {
         axiosInstance.get("/admin/stats"),
         axiosInstance.get("/questions/counts").catch(() => ({ data: { counts: {} } })),
       ]);
-      setStudentsList(studentsData.data?.students || []);
-      setStats(statsData.data?.stats || { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
-      setQuestionCounts(countsData.data?.counts || {});
+      setStudentsList(studentsData.data?.students || studentsData.data?.data || studentsData.data || []);
+      setStats(statsData.data?.stats || statsData.data?.data || statsData.data || { totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
+      setQuestionCounts(countsData.data?.counts || countsData.data?.data || {});
     } catch (err) {
       console.error("Admin data load error:", err);
     }
@@ -233,7 +240,14 @@ export default function QuizPage() {
   const loadAdminQuestions = async () => {
     try {
       const { data } = await axiosInstance.get("/questions");
-      setAdminQs(Array.isArray(data.questions) ? data.questions : []);
+      const list = Array.isArray(data?.questions)
+        ? data.questions
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [];
+      setAdminQs(list);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to load questions");
     }
@@ -268,7 +282,9 @@ export default function QuizPage() {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
+        confirmPassword: form.password.trim(),
         class: selectedClass,
+        role: "student",
       });
       toast.success("Registered! Please login.");
       setView("login");
@@ -293,7 +309,9 @@ export default function QuizPage() {
       });
       const u = data.user || data;
       localStorage.setItem("user", JSON.stringify(u));
+      localStorage.setItem("scholar_quiz_user_data", JSON.stringify(u));
       localStorage.setItem("token", data.token);
+      localStorage.setItem("scholar_quiz_token", data.token);
       setUser(u);
       setForm({ ...form, password: "" });
       toast.success("Login successful");
@@ -331,12 +349,16 @@ export default function QuizPage() {
 
   const logoutStudent = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("scholar_quiz_token");
     localStorage.removeItem("user");
+    localStorage.removeItem("scholar_quiz_user_data");
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("scholar_quiz_token");
     localStorage.removeItem("user");
+    localStorage.removeItem("scholar_quiz_user_data");
     setUser(null);
     setView("landing");
     toast.info("Logged out");
@@ -358,6 +380,7 @@ export default function QuizPage() {
         password: pass.trim(),
       });
       localStorage.setItem("adminToken", data.token);
+      localStorage.setItem("scholar_admin_token", data.token);
       setIsAdmin(true);
       setView("admin-panel");
       toast.success("Admin access granted");
@@ -372,6 +395,7 @@ export default function QuizPage() {
 
   const handleAdminLogout = () => {
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("scholar_admin_token");
     setIsAdmin(false);
     setView("landing");
     toast.info("Admin logged out");
@@ -416,6 +440,7 @@ export default function QuizPage() {
       const updatedUser = { ...user, quizAttempted: true, quizScore: data.score, wrongAnswers: data.wrongAnswers || [] };
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
+      localStorage.setItem("scholar_quiz_user_data", JSON.stringify(updatedUser));
       setView("result");
       toast.success(`Submitted! Score: ${data.score}/${questions.length}`);
     } catch (err: any) {
