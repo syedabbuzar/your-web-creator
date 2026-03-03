@@ -183,9 +183,11 @@ export default function QuizPage() {
 
   // Initialize on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const adminToken = localStorage.getItem("adminToken");
-    const savedUser = JSON.parse(localStorage.getItem("user") || "null");
+    const token = localStorage.getItem("token") || localStorage.getItem("scholar_quiz_token");
+    const adminToken = localStorage.getItem("adminToken") || localStorage.getItem("scholar_admin_token");
+    const savedUser = JSON.parse(
+      localStorage.getItem("user") || localStorage.getItem("scholar_quiz_user_data") || "null"
+    );
 
     if (adminToken) {
       setIsAdmin(true);
