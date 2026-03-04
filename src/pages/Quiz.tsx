@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen, LogOut, Settings, User, AlertCircle, CheckCircle, XCircle,
-  RotateCcw, Edit, Trash, Plus, Search, Eye, Printer,
+  RotateCcw, Edit, Trash, Plus, Search, Eye, EyeOff, Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
