@@ -139,6 +139,7 @@ export default function QuizPage() {
   const [stats, setStats] = useState<Stats>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
 
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
