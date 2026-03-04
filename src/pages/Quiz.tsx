@@ -577,13 +577,13 @@ export default function QuizPage() {
             {view === "login" && (
               <>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
-                <div className="space-y-2"><Label>Password</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required /></div>
+                <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
               </>
             )}
             {view === "change-class" && (
               <>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
-                <div className="space-y-2"><Label>Password</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required /></div>
+                <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
                 <ClassSelect value={form.newClass} onChange={(v) => setForm({ ...form, newClass: v })} label="New Class" />
               </>
             )}
