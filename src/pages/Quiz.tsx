@@ -351,10 +351,10 @@ export default function QuizPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const answerPayload = questions.map((q) => ({
-        questionId: q._id,
-        selectedOptionId: answers[q._id] || "",
-      }));
+      const answerPayload = questions.reduce<Record<string, string>>((acc, q) => {
+        acc[q._id] = answers[q._id] || "";
+        return acc;
+      }, {});
       const { data } = await axiosInstance.post("/quiz/submit", { answers: answerPayload });
       const updatedUser = { ...user, quizAttempted: true, quizScore: data.score, wrongAnswers: data.wrongAnswers || [] };
       setUser(updatedUser);
