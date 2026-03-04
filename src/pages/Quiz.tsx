@@ -532,7 +532,18 @@ export default function QuizPage() {
         <CardContent>
           <form onSubmit={handleAdminLogin} className="space-y-3">
             <Input name="email" type="email" placeholder="Admin email" required />
-            <Input name="password" type="password" placeholder="Admin password" required />
+            <div className="relative">
+              <Input name="password" type={showPassword.admin ? "text" : "password"} placeholder="Admin password" className="pr-10" required />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                onClick={() => setShowPassword((p) => ({ ...p, admin: !p.admin }))}
+              >
+                {showPassword.admin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
             <Button type="submit" className="w-full" variant="secondary" disabled={loading}>
               {loading ? "Logging in..." : "Admin Login"}
             </Button>
