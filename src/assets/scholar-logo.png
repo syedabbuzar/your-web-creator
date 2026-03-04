@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scholar Educational Campus</title>
+    <meta name="description" content="Scholar Educational Campus - Admission, Events, Exams & More" />
+    <meta name="author" content="Scholar Educational Campus" />
+    <link rel="icon" href="/scholar-logo.jpg" type="image/jpeg" />
+
+    <meta property="og:title" content="Scholar Educational Campus" />
+    <meta property="og:description" content="Scholar Educational Campus - Admission, Events, Exams & More" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/scholar-logo.jpg" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/scholar-logo.jpg" />
+    <script type="module" crossorigin src="/assets/index-B1rjvIAt.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CVRzB-Dl.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
