@@ -121,11 +121,11 @@ const About = () => {
           </div>
           <p className="text-sm sm:text-base text-muted-foreground text-center mb-8">Meet the dedicated team leading Scholar Educational Campus</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
-            {leaders.map((l:any,i)=>(<div key={l._id||i} className="bg-card rounded-lg overflow-hidden card-hover animate-fade-in-up relative group" style={{animationDelay:`${i*0.1}s`}}>
-              {isAdmin && <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={()=>openEdit(l)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary"><Pencil className="w-3 h-3" /></button><button onClick={()=>handleDelete(l._id)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10"><Trash2 className="w-3 h-3" /></button></div>}
-              <div className="aspect-square overflow-hidden flex items-center justify-center p-4"><OptimizedImage src={l.image} alt={l.name} className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover border-4 border-primary/20" /></div>
-              <div className="p-4 text-center"><h3 className="font-bold text-foreground text-sm sm:text-base">{l.name}</h3><p className="text-xs sm:text-sm text-muted-foreground">{l.role}</p></div>
-            </div>))}
+            {leaders.map((l:any,i)=>{ const leaderId = l._id || l.id; return (<div key={leaderId || i} className="rounded-2xl border border-border/60 bg-card/95 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-fade-in-up relative group" style={{animationDelay:`${i*0.1}s`}}>
+              {isAdmin && <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"><button onClick={()=>openEdit(l)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-secondary"><Pencil className="w-3 h-3" /></button><button onClick={()=>handleDelete(leaderId)} className="p-1.5 bg-card rounded-full shadow-md hover:bg-destructive/10"><Trash2 className="w-3 h-3" /></button></div>}
+              <div className="aspect-square overflow-hidden flex items-center justify-center p-6 bg-gradient-to-br from-primary/10 via-secondary/40 to-accent/10"><OptimizedImage src={l.image} alt={l.name} className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover border-4 border-background shadow-lg" /></div>
+              <div className="p-5 text-center"><h3 className="font-bold text-foreground text-base">{l.name}</h3><p className="text-sm text-muted-foreground mt-1">{l.role}</p></div>
+            </div>); })}
           </div>
         </div>
       </section>
