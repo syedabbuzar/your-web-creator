@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen, LogOut, Settings, User, AlertCircle, CheckCircle, XCircle,
-  RotateCcw, Edit, Trash, Plus, Search, Eye, Printer,
+  RotateCcw, Edit, Trash, Plus, Search, Eye, EyeOff, Printer,
 } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
@@ -139,6 +139,7 @@ export default function QuizPage() {
   const [stats, setStats] = useState<Stats>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
 
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
@@ -350,10 +351,10 @@ export default function QuizPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const answerPayload = questions.map((q) => ({
-        questionId: q._id,
-        selectedOptionId: answers[q._id] || "",
-      }));
+      const answerPayload = questions.reduce<Record<string, string>>((acc, q) => {
+        acc[q._id] = answers[q._id] || "";
+        return acc;
+      }, {});
       const { data } = await axiosInstance.post("/quiz/submit", { answers: answerPayload });
       const updatedUser = { ...user, quizAttempted: true, quizScore: data.score, wrongAnswers: data.wrongAnswers || [] };
       setUser(updatedUser);
@@ -531,7 +532,18 @@ export default function QuizPage() {
         <CardContent>
           <form onSubmit={handleAdminLogin} className="space-y-3">
             <Input name="email" type="email" placeholder="Admin email" required />
-            <Input name="password" type="password" placeholder="Admin password" required />
+            <div className="relative">
+              <Input name="password" type={showPassword.admin ? "text" : "password"} placeholder="Admin password" className="pr-10" required />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+                onClick={() => setShowPassword((p) => ({ ...p, admin: !p.admin }))}
+              >
+                {showPassword.admin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
             <Button type="submit" className="w-full" variant="secondary" disabled={loading}>
               {loading ? "Logging in..." : "Admin Login"}
             </Button>
@@ -558,20 +570,20 @@ export default function QuizPage() {
               <>
                 <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" required /></div>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
-                <div className="space-y-2"><Label>Password</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} required /></div>
+                <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
                 <ClassSelect value={form.class} onChange={(v) => setForm({ ...form, class: v })} label="Your Class" />
               </>
             )}
             {view === "login" && (
               <>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
-                <div className="space-y-2"><Label>Password</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required /></div>
+                <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
               </>
             )}
             {view === "change-class" && (
               <>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
-                <div className="space-y-2"><Label>Password</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" required /></div>
+                <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
                 <ClassSelect value={form.newClass} onChange={(v) => setForm({ ...form, newClass: v })} label="New Class" />
               </>
             )}
