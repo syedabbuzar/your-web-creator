@@ -806,7 +806,7 @@ export default function QuizPage() {
     // Use latest attempt data
     const latestAttempt = localAttempts.length > 0 ? localAttempts[localAttempts.length - 1] : null;
     const score = latestAttempt?.score ?? user.quizScore ?? 0;
-    const total = latestAttempt?.total ?? questions.length || 10;
+    const total = latestAttempt?.total ?? (questions.length || 10);
     const wrong = latestAttempt?.wrongAnswers ?? user.wrongAnswers ?? [];
     const pct = total > 0 ? Math.round((score / total) * 100) : 0;
     const attemptCount = localAttempts.length;
