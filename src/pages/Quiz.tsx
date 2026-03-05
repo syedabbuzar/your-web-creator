@@ -92,7 +92,7 @@ th{background:#edf2f7;font-weight:600}
 @media print{body{padding:15px}button{display:none!important}}
 </style></head><body>
 <h1>🎓 Scholar Educational Campus</h1>
-<h2 style="text-align:center;color:#4a5568">Student Quiz Report</h2>
+<h2 style="text-align:center;color:#4a5568">Student Quiz Report</h2> 
 <div class="info">
 <div><div class="label">Student Name</div><div class="value">${student.name}</div></div>
 <div><div class="label">Email</div><div class="value">${student.email}</div></div>
