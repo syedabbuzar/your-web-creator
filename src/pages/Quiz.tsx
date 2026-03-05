@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen, LogOut, Settings, User, AlertCircle, CheckCircle, XCircle,
-  RotateCcw, Edit, Trash, Plus, Search, Eye, EyeOff, Printer,
+  RotateCcw, Edit, Trash, Plus, Search, Eye, EyeOff, Printer, History,
 } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
@@ -42,6 +42,14 @@ interface WrongAnswer {
   correctOption: string;
 }
 
+interface AttemptRecord {
+  attemptNumber: number;
+  score: number;
+  total: number;
+  wrongAnswers: WrongAnswer[];
+  attemptedAt: string;
+}
+
 interface StudentData {
   _id: string;
   name: string;
@@ -50,6 +58,8 @@ interface StudentData {
   quizAttempted: boolean;
   quizScore?: number;
   wrongAnswers?: WrongAnswer[];
+  attemptCount?: number;
+  quizHistory?: AttemptRecord[];
   createdAt: string;
   role?: string;
 }
@@ -71,9 +81,34 @@ interface AdminQuestionFormData {
   correctIdx: number;
 }
 
+const MAX_ATTEMPTS = 10;
+
+// ============ LOCAL ATTEMPT TRACKING ============
+const getLocalAttempts = (userId: string, classNum: number): AttemptRecord[] => {
+  try {
+    const key = `quiz_attempts_${userId}_class${classNum}`;
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch { return []; }
+};
+
+const saveLocalAttempt = (userId: string, classNum: number, attempt: AttemptRecord) => {
+  const key = `quiz_attempts_${userId}_class${classNum}`;
+  const existing = getLocalAttempts(userId, classNum);
+  existing.push(attempt);
+  localStorage.setItem(key, JSON.stringify(existing));
+};
+
+const getLocalAttemptCount = (userId: string, classNum: number): number => {
+  return getLocalAttempts(userId, classNum).length;
+};
+
 // ============ PRINT HELPER ============
 const printStudentDetails = (student: StudentData, totalQuestions: number) => {
-  const pct = student.quizScore ? Math.round((student.quizScore / totalQuestions) * 100) : 0;
+  const attempts = student.quizHistory || [];
+  const latestAttempt = attempts.length > 0 ? attempts[attempts.length - 1] : null;
+  const score = latestAttempt?.score ?? student.quizScore ?? 0;
+  const wrong = latestAttempt?.wrongAnswers ?? student.wrongAnswers ?? [];
+  const pct = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
   const html = `<!DOCTYPE html><html><head><title>Student Report - ${student.name}</title>
 <style>
 body{font-family:Arial,sans-serif;padding:30px;max-width:700px;margin:0 auto}
@@ -84,6 +119,9 @@ h1{text-align:center;color:#1a365d;border-bottom:3px solid #1a365d;padding-botto
 .value{font-size:16px;font-weight:bold;color:#2d3748}
 .score-box{text-align:center;padding:20px;background:${pct >= 70 ? '#f0fff4' : pct >= 50 ? '#fffff0' : '#fff5f5'};border-radius:10px;margin:20px 0}
 .score-big{font-size:48px;font-weight:bold;color:${pct >= 70 ? '#38a169' : pct >= 50 ? '#d69e2e' : '#e53e3e'}}
+.attempt-table{width:100%;border-collapse:collapse;margin:15px 0}
+.attempt-table th,.attempt-table td{padding:8px 12px;border:1px solid #e2e8f0;text-align:center;font-size:13px}
+.attempt-table th{background:#edf2f7;font-weight:600}
 table{width:100%;border-collapse:collapse;margin-top:15px}
 th,td{padding:8px 12px;border:1px solid #e2e8f0;text-align:left;font-size:13px}
 th{background:#edf2f7;font-weight:600}
@@ -97,17 +135,21 @@ th{background:#edf2f7;font-weight:600}
 <div><div class="label">Student Name</div><div class="value">${student.name}</div></div>
 <div><div class="label">Email</div><div class="value">${student.email}</div></div>
 <div><div class="label">Class</div><div class="value">Class ${student.class}</div></div>
-<div><div class="label">Registered</div><div class="value">${new Date(student.createdAt).toLocaleDateString('en-IN')}</div></div>
+<div><div class="label">Total Attempts</div><div class="value">${student.attemptCount || (student.quizAttempted ? 1 : 0)}</div></div>
 </div>
 <div class="score-box">
-<div class="score-big">${student.quizScore || 0}/${totalQuestions}</div>
+<div class="score-big">${score}/${totalQuestions}</div>
 <div style="font-size:18px;margin-top:5px">${pct}% - ${pct >= 70 ? 'Excellent' : pct >= 50 ? 'Good' : 'Needs Improvement'}</div>
-<div style="font-size:13px;color:#718096;margin-top:5px">Status: ${student.quizAttempted ? 'Attempted' : 'Not Attempted'}</div>
+<div style="font-size:13px;color:#718096;margin-top:5px">Latest Attempt Score</div>
 </div>
-${student.wrongAnswers && student.wrongAnswers.length > 0 ? `
-<h3>❌ Wrong Answers (${student.wrongAnswers.length})</h3>
+${attempts.length > 1 ? `
+<h3>📊 Attempt History (${attempts.length} attempts)</h3>
+<table class="attempt-table"><thead><tr><th>#</th><th>Score</th><th>Percentage</th><th>Date</th></tr></thead>
+<tbody>${attempts.map((a, i) => `<tr><td>${a.attemptNumber}</td><td>${a.score}/${a.total}</td><td>${Math.round((a.score / a.total) * 100)}%</td><td>${new Date(a.attemptedAt).toLocaleString('en-IN')}</td></tr>`).join('')}</tbody></table>` : ''}
+${wrong.length > 0 ? `
+<h3>❌ Wrong Answers - Latest Attempt (${wrong.length})</h3>
 <table><thead><tr><th>#</th><th>Question</th><th>Your Answer</th><th>Correct Answer</th></tr></thead>
-<tbody>${student.wrongAnswers.map((w, i) => `<tr><td>${i + 1}</td><td>${w.questionText}</td><td class="wrong">${w.selectedOption}</td><td class="correct">${w.correctOption}</td></tr>`).join('')}</tbody></table>` : '<p style="text-align:center;color:#38a169;font-size:16px">✅ All answers correct!</p>'}
+<tbody>${wrong.map((w, i) => `<tr><td>${i + 1}</td><td>${w.questionText}</td><td class="wrong">${w.selectedOption}</td><td class="correct">${w.correctOption}</td></tr>`).join('')}</tbody></table>` : '<p style="text-align:center;color:#38a169;font-size:16px">✅ All answers correct!</p>'}
 <div class="footer">
 <p>Generated on ${new Date().toLocaleString('en-IN')}</p>
 <p>Scholar Educational Campus - VERITAS (Truth)</p>
@@ -140,6 +182,8 @@ export default function QuizPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
+  const [showAttemptHistory, setShowAttemptHistory] = useState(false);
+  const [localAttempts, setLocalAttempts] = useState<AttemptRecord[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
@@ -153,7 +197,25 @@ export default function QuizPage() {
       loadAdminQuestions();
     } else if (token && savedUser) {
       setUser(savedUser);
-      setView(savedUser.quizAttempted ? "result" : "quiz");
+      const attempts = getLocalAttempts(savedUser._id, savedUser.class);
+      setLocalAttempts(attempts);
+      if (savedUser.quizAttempted && attempts.length > 0) {
+        setView("result");
+      } else if (savedUser.quizAttempted) {
+        // First attempt was done but no local history yet — seed it
+        const seeded: AttemptRecord = {
+          attemptNumber: 1,
+          score: savedUser.quizScore || 0,
+          total: 10,
+          wrongAnswers: savedUser.wrongAnswers || [],
+          attemptedAt: savedUser.createdAt,
+        };
+        saveLocalAttempt(savedUser._id, savedUser.class, seeded);
+        setLocalAttempts([seeded]);
+        setView("result");
+      } else {
+        setView("quiz");
+      }
       loadQuestions(savedUser.class);
     } else {
       setView("landing");
@@ -246,7 +308,28 @@ export default function QuizPage() {
       setForm({ ...form, password: "" });
       toast.success("Login successful");
       await loadQuestions(u.class);
-      setView(u.quizAttempted ? "result" : "quiz");
+
+      // Load local attempts
+      const attempts = getLocalAttempts(u._id, u.class);
+      setLocalAttempts(attempts);
+
+      if (u.quizAttempted && attempts.length === 0) {
+        // Seed first attempt from backend data
+        const seeded: AttemptRecord = {
+          attemptNumber: 1,
+          score: u.quizScore || 0,
+          total: 10,
+          wrongAnswers: u.wrongAnswers || [],
+          attemptedAt: u.createdAt,
+        };
+        saveLocalAttempt(u._id, u.class, seeded);
+        setLocalAttempts([seeded]);
+        setView("result");
+      } else if (u.quizAttempted) {
+        setView("result");
+      } else {
+        setView("quiz");
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Login failed");
     }
@@ -279,6 +362,7 @@ export default function QuizPage() {
     localStorage.removeItem("scholar_quiz_token");
     localStorage.removeItem("scholar_quiz_user");
     setUser(null);
+    setLocalAttempts([]);
     setView("landing");
     toast.info("Logged out");
   };
@@ -326,8 +410,20 @@ export default function QuizPage() {
       toast.error("No questions for your class");
       return;
     }
-    if (user?.quizAttempted) {
-      setView("result");
+    setAnswers({});
+    setCurrentIdx(0);
+    setView("quiz");
+  };
+
+  const startReAttempt = () => {
+    if (!user) return;
+    const attemptCount = getLocalAttemptCount(user._id, user.class);
+    if (attemptCount >= MAX_ATTEMPTS) {
+      toast.error(`Maximum ${MAX_ATTEMPTS} attempts reached for Class ${user.class}`);
+      return;
+    }
+    if (questions.length === 0) {
+      toast.error("No questions for your class");
       return;
     }
     setAnswers({});
@@ -355,12 +451,72 @@ export default function QuizPage() {
         acc[q._id] = answers[q._id] || "";
         return acc;
       }, {});
-      const { data } = await axiosInstance.post("/quiz/submit", { answers: answerPayload });
-      const updatedUser = { ...user, quizAttempted: true, quizScore: data.score, wrongAnswers: data.wrongAnswers || [] };
+
+      // Try submitting to backend
+      let score = 0;
+      let wrongAnswers: WrongAnswer[] = [];
+      let submittedToBackend = false;
+
+      try {
+        const { data } = await axiosInstance.post("/quiz/submit", { answers: answerPayload });
+        score = data.score;
+        wrongAnswers = data.wrongAnswers || [];
+        submittedToBackend = true;
+      } catch (backendErr: any) {
+        // If backend says "already attempted", calculate score locally
+        if (backendErr.response?.status === 400 && 
+            backendErr.response?.data?.message?.toLowerCase().includes("already attempted")) {
+          // Calculate score locally for re-attempt
+          for (const q of questions) {
+            const selected = answers[q._id];
+            if (!selected) {
+              wrongAnswers.push({
+                questionId: q._id,
+                questionText: q.question,
+                selectedOption: "Not answered",
+                correctOption: q.options.find(o => o.id === q.correctOptionId)?.text || "",
+              });
+            } else if (selected === q.correctOptionId) {
+              score++;
+            } else {
+              wrongAnswers.push({
+                questionId: q._id,
+                questionText: q.question,
+                selectedOption: q.options.find(o => o.id === selected)?.text || "Invalid",
+                correctOption: q.options.find(o => o.id === q.correctOptionId)?.text || "",
+              });
+            }
+          }
+        } else {
+          throw backendErr;
+        }
+      }
+
+      // Save attempt locally
+      const attemptCount = getLocalAttemptCount(user._id, user.class);
+      const newAttempt: AttemptRecord = {
+        attemptNumber: attemptCount + 1,
+        score,
+        total: questions.length,
+        wrongAnswers,
+        attemptedAt: new Date().toISOString(),
+      };
+      saveLocalAttempt(user._id, user.class, newAttempt);
+      const updatedAttempts = getLocalAttempts(user._id, user.class);
+      setLocalAttempts(updatedAttempts);
+
+      const updatedUser = { 
+        ...user, 
+        quizAttempted: true, 
+        quizScore: score, 
+        wrongAnswers,
+        attemptCount: updatedAttempts.length,
+        quizHistory: updatedAttempts,
+      };
       setUser(updatedUser);
       localStorage.setItem("scholar_quiz_user", JSON.stringify(updatedUser));
       setView("result");
-      toast.success(`Submitted! Score: ${data.score}/${questions.length}`);
+      toast.success(`Attempt #${newAttempt.attemptNumber} submitted! Score: ${score}/${questions.length}`);
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Submission failed");
     }
@@ -516,7 +672,7 @@ export default function QuizPage() {
           <BookOpen className="w-8 h-8 text-primary" />
         </div>
         <h2 className="text-3xl font-bold">Class-wise Quiz Portal</h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">Practice quizzes for Class 1-10. Register, attempt, and track progress.</p>
+        <p className="text-muted-foreground max-w-xl mx-auto">Practice quizzes for Class 1-10. Register, attempt, and track progress. You can re-attempt up to {MAX_ATTEMPTS} times per class!</p>
       </div>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
         <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>
@@ -619,6 +775,7 @@ export default function QuizPage() {
       </Card>
     );
 
+    const attemptNum = getLocalAttemptCount(user._id, user.class) + 1;
     const q = questions[currentIdx];
     const progress = Math.round(((currentIdx + 1) / questions.length) * 100);
     return (
@@ -626,7 +783,7 @@ export default function QuizPage() {
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-bold">Class {user.class} Quiz</h2>
-            <p className="text-muted-foreground">Q{currentIdx + 1} of {questions.length}</p>
+            <p className="text-muted-foreground">Attempt #{attemptNum} • Q{currentIdx + 1} of {questions.length}</p>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="w-4 h-4 mr-1" />Logout</Button>
         </div>
@@ -639,28 +796,35 @@ export default function QuizPage() {
           <Button variant="outline" onClick={prevQ} disabled={currentIdx === 0}>← Previous</Button>
           <Button onClick={nextQ} disabled={loading}>{currentIdx === questions.length - 1 ? (loading ? "Submitting..." : "Submit Quiz") : "Next →"}</Button>
         </div>
-        <Card className="bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800">
-          <CardContent className="pt-4 text-center text-sm text-yellow-800 dark:text-yellow-300">⚠️ Cannot retake after submission</CardContent>
-        </Card>
       </div>
     );
   };
 
   const renderResult = () => {
     if (!user) { setView("login"); return null; }
-    const score = user.quizScore || 0;
-    const total = questions.length || 10;
-    const wrong = user.wrongAnswers || [];
+    
+    // Use latest attempt data
+    const latestAttempt = localAttempts.length > 0 ? localAttempts[localAttempts.length - 1] : null;
+    const score = latestAttempt?.score ?? user.quizScore ?? 0;
+    const total = latestAttempt?.total ?? (questions.length || 10);
+    const wrong = latestAttempt?.wrongAnswers ?? user.wrongAnswers ?? [];
     const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+    const attemptCount = localAttempts.length;
+    const canReAttempt = attemptCount < MAX_ATTEMPTS;
     const msg = pct >= 70 ? { t: "Great! 👏", c: "text-green-600" } : pct >= 50 ? { t: "Good! 👍", c: "text-yellow-600" } : { t: "Practice! 📚", c: "text-orange-600" };
+
     return (
       <div className="space-y-6">
+        {/* Score Card */}
         <Card className="text-center border-2 border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2">
               {pct >= 70 ? <CheckCircle className="w-6 h-6 text-green-500" /> : <AlertCircle className="w-6 h-6 text-yellow-500" />}
               Class {user.class} Result
             </CardTitle>
+            <CardDescription>
+              Attempt #{attemptCount} of {MAX_ATTEMPTS}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-6xl font-bold">{score}/{total}</div>
@@ -668,9 +832,73 @@ export default function QuizPage() {
             <Badge variant={pct >= 70 ? "default" : "secondary"} className="text-lg py-1">{pct}%</Badge>
           </CardContent>
         </Card>
+
+        {/* Attempt History */}
+        {localAttempts.length > 0 && (
+          <Card>
+            <CardHeader className="cursor-pointer" onClick={() => setShowAttemptHistory(!showAttemptHistory)}>
+              <CardTitle className="flex items-center justify-between text-base">
+                <span className="flex items-center gap-2">
+                  <History className="w-5 h-5" />
+                  Attempt History ({localAttempts.length}/{MAX_ATTEMPTS})
+                </span>
+                <span className="text-muted-foreground text-sm">{showAttemptHistory ? "▲ Hide" : "▼ Show"}</span>
+              </CardTitle>
+            </CardHeader>
+            {showAttemptHistory && (
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left">
+                        <th className="pb-2 pr-4">#</th>
+                        <th className="pb-2 pr-4">Score</th>
+                        <th className="pb-2 pr-4">%</th>
+                        <th className="pb-2">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {localAttempts.map((a, idx) => {
+                        const aPct = a.total > 0 ? Math.round((a.score / a.total) * 100) : 0;
+                        const isLatest = idx === localAttempts.length - 1;
+                        return (
+                          <tr key={idx} className={isLatest ? "bg-primary/5 font-medium" : ""}>
+                            <td className="py-2 pr-4">
+                              {a.attemptNumber}
+                              {isLatest && <Badge variant="outline" className="ml-2 text-xs">Latest</Badge>}
+                            </td>
+                            <td className="py-2 pr-4">{a.score}/{a.total}</td>
+                            <td className="py-2 pr-4">
+                              <span className={aPct >= 70 ? "text-green-600" : aPct >= 50 ? "text-yellow-600" : "text-red-600"}>
+                                {aPct}%
+                              </span>
+                            </td>
+                            <td className="py-2 text-muted-foreground">{new Date(a.attemptedAt).toLocaleString('en-IN')}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {localAttempts.length > 1 && (
+                  <div className="mt-3 p-3 bg-secondary/30 rounded-lg text-sm">
+                    <p className="font-medium">📊 Summary</p>
+                    <p className="text-muted-foreground">
+                      Best: {Math.max(...localAttempts.map(a => a.score))}/{total} • 
+                      Average: {Math.round(localAttempts.reduce((sum, a) => sum + a.score, 0) / localAttempts.length)}/{total} • 
+                      Attempts: {localAttempts.length}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        )}
+
+        {/* Wrong Answers */}
         {wrong.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><XCircle className="w-5 h-5" /> Mistakes ({wrong.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><XCircle className="w-5 h-5" /> Mistakes - Latest Attempt ({wrong.length})</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {wrong.map((w, i) => (
                 <div key={i} className="p-4 rounded-lg bg-destructive/5 border border-destructive/20">
@@ -684,16 +912,44 @@ export default function QuizPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Actions */}
         <Card className="bg-muted/30">
-          <CardContent className="pt-4 text-center">
-            <p className="text-sm text-muted-foreground mb-3">⚠️ Cannot retake quiz for Class {user.class}</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button variant="outline" onClick={() => setView("landing")}>Home</Button>
-              <Button variant="secondary" onClick={() => setView("change-class")}><RotateCcw className="w-4 h-4 mr-1" />Change Class</Button>
-              <Button variant="outline" onClick={() => printStudentDetails(user, total)}>
-                <Printer className="w-4 h-4 mr-1" />Print Result
-              </Button>
-            </div>
+          <CardContent className="pt-4 text-center space-y-3">
+            {canReAttempt ? (
+              <div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  🔄 You have {MAX_ATTEMPTS - attemptCount} re-attempts remaining for Class {user.class}
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button onClick={startReAttempt} className="bg-green-600 hover:bg-green-700">
+                    <RotateCcw className="w-4 h-4 mr-2" />Re-attempt Quiz
+                  </Button>
+                  <Button variant="outline" onClick={() => setView("landing")}>Home</Button>
+                  <Button variant="secondary" onClick={() => setView("change-class")}>
+                    <Settings className="w-4 h-4 mr-1" />Change Class
+                  </Button>
+                  <Button variant="outline" onClick={() => printStudentDetails({...user, attemptCount, quizHistory: localAttempts}, total)}>
+                    <Printer className="w-4 h-4 mr-1" />Print Result
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  ⚠️ Maximum {MAX_ATTEMPTS} attempts reached for Class {user.class}
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button variant="outline" onClick={() => setView("landing")}>Home</Button>
+                  <Button variant="secondary" onClick={() => setView("change-class")}>
+                    <RotateCcw className="w-4 h-4 mr-1" />Change Class
+                  </Button>
+                  <Button variant="outline" onClick={() => printStudentDetails({...user, attemptCount, quizHistory: localAttempts}, total)}>
+                    <Printer className="w-4 h-4 mr-1" />Print Result
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -807,7 +1063,7 @@ export default function QuizPage() {
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                    <thead><tr className="border-b text-left"><th className="pb-3">Name</th><th className="pb-3">Class</th><th className="pb-3">Status</th><th className="pb-3">Score</th><th className="pb-3 text-right">Actions</th></tr></thead>
+                    <thead><tr className="border-b text-left"><th className="pb-3">Name</th><th className="pb-3">Class</th><th className="pb-3">Status</th><th className="pb-3">Score</th><th className="pb-3">Attempts</th><th className="pb-3 text-right">Actions</th></tr></thead>
                     <tbody className="divide-y">
                       {filteredStudents.map((student) => (
                         <tr key={student._id} className="hover:bg-secondary/20">
@@ -815,6 +1071,11 @@ export default function QuizPage() {
                           <td className="py-3">Class {student.class}</td>
                           <td className="py-3">{student.quizAttempted ? <Badge variant="default" className="bg-green-500">Attempted</Badge> : <Badge variant="outline">Not Attempted</Badge>}</td>
                           <td className="py-3">{student.quizAttempted ? <span className="font-medium">{student.quizScore}</span> : "-"}</td>
+                          <td className="py-3">
+            <Badge variant="outline" className="text-xs">
+                              {(student.attemptCount ?? (student.quizAttempted ? 1 : 0))}x
+                            </Badge>
+                          </td>
                           <td className="py-3 text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(student)}><Eye className="w-4 h-4 mr-1" />View</Button>
@@ -824,7 +1085,7 @@ export default function QuizPage() {
                         </tr>
                       ))}
                       {filteredStudents.length === 0 && (
-                        <tr><td colSpan={5} className="py-8 text-center text-muted-foreground">No students found</td></tr>
+                        <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">No students found</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -846,7 +1107,7 @@ export default function QuizPage() {
                   <div><Label className="text-muted-foreground">Name</Label><p className="font-medium">{selectedStudent.name}</p></div>
                   <div><Label className="text-muted-foreground">Email</Label><p className="font-medium">{selectedStudent.email}</p></div>
                   <div><Label className="text-muted-foreground">Class</Label><p className="font-medium">Class {selectedStudent.class}</p></div>
-                  <div><Label className="text-muted-foreground">Registered</Label><p className="font-medium">{new Date(selectedStudent.createdAt).toLocaleDateString()}</p></div>
+                  <div><Label className="text-muted-foreground">Attempts</Label><p className="font-medium">{selectedStudent.attemptCount || (selectedStudent.quizAttempted ? 1 : 0)} time(s)</p></div>
                 </div>
                 <Card className={selectedStudent.quizAttempted ? "border-green-200" : "border-border"}>
                   <CardHeader className="pb-3">
@@ -859,13 +1120,36 @@ export default function QuizPage() {
                     {selectedStudent.quizAttempted ? (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Score</span>
+                          <span className="text-muted-foreground">Latest Score</span>
                           <span className="text-2xl font-bold">{selectedStudent.quizScore}/{questions.length || 10}</span>
                         </div>
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm"><span>Percentage</span><span>{selectedStudent.quizScore ? Math.round((selectedStudent.quizScore / (questions.length || 10)) * 100) : 0}%</span></div>
                           <Progress value={selectedStudent.quizScore ? Math.round((selectedStudent.quizScore / (questions.length || 10)) * 100) : 0} className="h-2" />
                         </div>
+
+                        {/* Attempt history from backend if available */}
+                        {selectedStudent.quizHistory && selectedStudent.quizHistory.length > 1 && (
+                          <div className="mt-4">
+                            <h4 className="font-medium mb-2 flex items-center gap-1"><History className="w-4 h-4" /> All Attempts ({selectedStudent.quizHistory.length})</h4>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm">
+                                <thead><tr className="border-b"><th className="pb-2 text-left">#</th><th className="pb-2 text-left">Score</th><th className="pb-2 text-left">%</th><th className="pb-2 text-left">Date</th></tr></thead>
+                                <tbody className="divide-y">
+                                  {selectedStudent.quizHistory.map((a, idx) => (
+                                    <tr key={idx}>
+                                      <td className="py-1">{a.attemptNumber}</td>
+                                      <td className="py-1">{a.score}/{a.total}</td>
+                                      <td className="py-1">{a.total > 0 ? Math.round((a.score / a.total) * 100) : 0}%</td>
+                                      <td className="py-1 text-muted-foreground">{new Date(a.attemptedAt).toLocaleString('en-IN')}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
                         {selectedStudent.wrongAnswers && selectedStudent.wrongAnswers.length > 0 && (
                           <div className="mt-4">
                             <h4 className="font-medium mb-2 flex items-center gap-1 text-red-600"><XCircle className="w-4 h-4" /> Wrong Answers ({selectedStudent.wrongAnswers.length})</h4>
