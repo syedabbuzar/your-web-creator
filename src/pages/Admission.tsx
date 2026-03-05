@@ -142,7 +142,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;padding:20px;max-width:750px;margin
 <div class="header">
 <h1>SCHOLAR EDUCATIONAL CAMPUS</h1>
 <h2>Admission Receipt</h2>
-<p>📞 +91 9503894282 &nbsp;|&nbsp; ✉ scholaries4282@gmail.com</p>
+<p>📞 +91 9503894282 &nbsp;|&nbsp; ✉ scholareducationalcampus@gmail.com</p>
 <p>📍 Hyderabad Road Wajegaon, Dist Nanded</p>
 </div>
 <table class="info-table">
@@ -181,7 +181,7 @@ else{imgs.forEach(function(img){if(img.complete){loaded++;if(loaded>=total)windo
           <img src={scholarLogo} alt="Logo" className="w-16 h-16 rounded-full mx-auto mb-3 object-cover" />
           <h2 className="text-xl font-bold text-primary">SCHOLAR EDUCATIONAL CAMPUS</h2>
           <p className="text-sm text-muted-foreground">Admission Receipt</p>
-          <p className="text-xs text-muted-foreground mt-1">📞 +91 9503894282 &nbsp;|&nbsp; ✉ scholaries4282@gmail.com</p>
+          <p className="text-xs text-muted-foreground mt-1">📞 +91 9503894282 &nbsp;|&nbsp; ✉ scholareducationalcampus@gmail.com</p>
           <p className="text-xs text-muted-foreground">📍 Hyderabad Road Wajegaon, Dist Nanded</p>
         </div>
         <div className="space-y-1">{[

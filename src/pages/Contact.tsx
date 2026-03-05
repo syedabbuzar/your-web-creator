@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const contactInfo = [
   { icon: MapPin, title: "Address", content: "Hyderabad Road Wajegaon, Dist Nanded" },
   { icon: Phone, title: "Phone", content: "+91 95038 34282" },
-  { icon: Mail, title: "Email", content: "scholaries4282@gmail.com" },
+  { icon: Mail, title: "Email", content: "scholareducationalcampus@gmail.com" },
   { icon: Clock, title: "Working Hours", content: "Mon - Sat: 8:00 AM - 5:00 PM" },
 ];
 
@@ -41,7 +41,7 @@ const Contact = () => {
 
   return (
     <Layout>
-      <SEOHead title="Contact Us" description="Contact Scholar Educational Campus Nanded. Address: Hyderabad Road Wajegaon, Nanded. Phone: +91 9503894282. Email: scholaries4282@gmail.com. Admissions enquiry welcome." keywords="contact scholar campus nanded, school phone number nanded, school address nanded, school email nanded" path="/contact" />
+      <SEOHead title="Contact Us" description="Contact Scholar Educational Campus Nanded. Address: Hyderabad Road Wajegaon, Nanded. Phone: +91 9503894282. Email: scholareducationalcampus@gmail.com. Admissions enquiry welcome." keywords="contact scholar campus nanded, school phone number nanded, school address nanded, school email nanded" path="/contact" />
       <FloatingActions />
       <section className="py-10 sm:py-14 md:py-20 bg-secondary/30">
         <div className="container mx-auto px-4 text-center">

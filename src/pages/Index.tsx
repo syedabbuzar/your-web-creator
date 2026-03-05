@@ -12,8 +12,8 @@ import axiosInstance from "@/lib/axios";
 const stats = [
   { icon: GraduationCap, value: "50+", label: "FACULTY" },
   { icon: Award, value: "50+", label: "AWARDS" },
-  { icon: BookOpen, value: "12+", label: "YEARS" },
-  { icon: Users, value: "10+", label: "SMART CLASS" },
+  { icon: BookOpen, value: "15+", label: "YEARS" },
+  { icon: Users, value: "", label: "SMART CLASS ROOMS" },
 ];
 
 const getEventId = (event: any) => event?._id || event?.id;

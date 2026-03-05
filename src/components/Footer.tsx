@@ -42,7 +42,7 @@ const Footer = () => {
               <li className="flex items-start gap-2 text-xs sm:text-sm opacity-80"><MapPin size={16} className="mt-0.5 flex-shrink-0" /><span>Hyderabad Road Wajegaon, Dist Nanded</span></li>
               <li className="flex items-center gap-2 text-xs sm:text-sm opacity-80"><Phone size={16} className="flex-shrink-0" /><span>+91 9503834282</span></li>
               <li className="flex items-center gap-2 text-xs sm:text-sm opacity-80"><Phone size={16} className="flex-shrink-0" /><span>+91 7775881477</span></li>
-              <li className="flex items-center gap-2 text-xs sm:text-sm opacity-80"><Mail size={16} className="flex-shrink-0" /><span>scholaries4282@gmail.com</span></li>
+              <li className="flex items-center gap-2 text-xs sm:text-sm opacity-80"><Mail size={16} className="flex-shrink-0" /><span>scholareducationalcampus@gmail.com</span></li>
             </ul>
           </div>
 
