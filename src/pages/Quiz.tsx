@@ -1072,8 +1072,8 @@ export default function QuizPage() {
                           <td className="py-3">{student.quizAttempted ? <Badge variant="default" className="bg-green-500">Attempted</Badge> : <Badge variant="outline">Not Attempted</Badge>}</td>
                           <td className="py-3">{student.quizAttempted ? <span className="font-medium">{student.quizScore}</span> : "-"}</td>
                           <td className="py-3">
-                            <Badge variant="outline" className="text-xs">
-                              {student.attemptCount || (student.quizAttempted ? 1 : 0)}x
+            <Badge variant="outline" className="text-xs">
+                              {(student.attemptCount ?? (student.quizAttempted ? 1 : 0))}x
                             </Badge>
                           </td>
                           <td className="py-3 text-right">
