@@ -753,6 +753,7 @@ export default function QuizPage() {
             </CardContent>
           </Card>
         )}
+        {user && <PracticeSetBox classNum={user.class} />}
         <Card className="bg-muted/30">
           <CardContent className="pt-4 text-center">
             <p className="text-sm text-muted-foreground mb-3">⚠️ Cannot retake quiz for Class {user.class}</p>
