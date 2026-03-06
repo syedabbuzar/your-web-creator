@@ -154,7 +154,8 @@ export default function QuizPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
-
+  const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(getPracticeLinks);
+  const [practiceForm, setPracticeForm] = useState({ title: "", url: "", classNum: "1" });
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
     const adminToken = localStorage.getItem("adminToken") || localStorage.getItem("scholar_admin_token");
