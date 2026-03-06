@@ -154,7 +154,18 @@ export default function QuizPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
-  const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(getPracticeLinks);
+  const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(() => {
+    const saved = getPracticeLinks();
+    if (saved.length > 0) return saved;
+    // Seed example links
+    const examples: PracticeSetLink[] = [
+      { id: "ex1", title: "Math Practice Set 1", url: "https://forms.gle/example1", classNum: 1 },
+      { id: "ex2", title: "English Practice Set", url: "https://forms.gle/example2", classNum: 1 },
+      { id: "ex3", title: "Science Practice Quiz", url: "https://forms.gle/example3", classNum: 9 },
+    ];
+    savePracticeLinks(examples);
+    return examples;
+  });
   const [practiceForm, setPracticeForm] = useState({ title: "", url: "", classNum: "1" });
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
