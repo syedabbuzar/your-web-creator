@@ -72,6 +72,19 @@ interface AdminQuestionFormData {
   correctIdx: number;
 }
 
+interface PracticeSetLink {
+  id: string;
+  title: string;
+  url: string;
+  classNum: number;
+}
+
+const PRACTICE_LINKS_KEY = "scholar_practice_links";
+const getPracticeLinks = (): PracticeSetLink[] => {
+  try { return JSON.parse(localStorage.getItem(PRACTICE_LINKS_KEY) || "[]"); } catch { return []; }
+};
+const savePracticeLinks = (links: PracticeSetLink[]) => localStorage.setItem(PRACTICE_LINKS_KEY, JSON.stringify(links));
+
 // ============ PRINT HELPER ============
 const printStudentDetails = (student: StudentData, totalQuestions: number) => {
   const pct = student.quizScore ? Math.round((student.quizScore / totalQuestions) * 100) : 0;
