@@ -860,6 +860,62 @@ export default function QuizPage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="practice" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" /> Add Practice Set Link</CardTitle>
+                <CardDescription>Add Google Form or external links for each class. Students will see these in their quiz view.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input value={practiceForm.title} onChange={(e) => setPracticeForm({ ...practiceForm, title: e.target.value })} placeholder="e.g. Math Practice Set 1" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Google Form / Link URL</Label>
+                    <Input value={practiceForm.url} onChange={(e) => setPracticeForm({ ...practiceForm, url: e.target.value })} placeholder="https://forms.google.com/..." />
+                  </div>
+                  <ClassSelect value={practiceForm.classNum} onChange={(v) => setPracticeForm({ ...practiceForm, classNum: v })} label="Class" />
+                  <Button onClick={addPracticeLink} className="h-10"><Plus className="w-4 h-4 mr-1" />Add Link</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {[1,2,3,4,5,6,7,8,9,10].map((c) => {
+              const classLinks = getClassPracticeLinks(c);
+              if (classLinks.length === 0) return null;
+              return (
+                <Card key={c}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Class {c} — {classLinks.length} link{classLinks.length > 1 ? "s" : ""}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {classLinks.map((link) => (
+                      <div key={link.id} className="flex items-center gap-3 p-3 rounded-lg border bg-secondary/20">
+                        <Link2 className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="flex-1 font-medium text-sm">{link.title}</span>
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-primary truncate max-w-[200px]">{link.url}</a>
+                        <Button variant="ghost" size="sm" className="text-destructive h-8 w-8 p-0" onClick={() => deletePracticeLink(link.id)}>
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {practiceLinks.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p>No practice set links added yet.</p>
+                  <p className="text-sm">Add Google Form links above for each class.</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           <TabsContent value="students" className="space-y-4 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{stats?.totalStudents || studentsList.length}</div></CardContent></Card>
