@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen, LogOut, Settings, User, AlertCircle, CheckCircle, XCircle,
   RotateCcw, Edit, Trash, Plus, Search, Eye, EyeOff, Printer,
+  ExternalLink, Link2, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
@@ -70,6 +71,19 @@ interface AdminQuestionFormData {
   options: string[];
   correctIdx: number;
 }
+
+interface PracticeSetLink {
+  id: string;
+  title: string;
+  url: string;
+  classNum: number;
+}
+
+const PRACTICE_LINKS_KEY = "scholar_practice_links";
+const getPracticeLinks = (): PracticeSetLink[] => {
+  try { return JSON.parse(localStorage.getItem(PRACTICE_LINKS_KEY) || "[]"); } catch { return []; }
+};
+const savePracticeLinks = (links: PracticeSetLink[]) => localStorage.setItem(PRACTICE_LINKS_KEY, JSON.stringify(links));
 
 // ============ PRINT HELPER ============
 const printStudentDetails = (student: StudentData, totalQuestions: number) => {
@@ -140,7 +154,19 @@ export default function QuizPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
-
+  const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(() => {
+    const saved = getPracticeLinks();
+    if (saved.length > 0) return saved;
+    // Seed example links
+    const examples: PracticeSetLink[] = [
+      { id: "ex1", title: "Math Practice Set 1", url: "https://forms.gle/example1", classNum: 1 },
+      { id: "ex2", title: "English Practice Set", url: "https://forms.gle/example2", classNum: 1 },
+      { id: "ex3", title: "Science Practice Quiz", url: "https://forms.gle/example3", classNum: 9 },
+    ];
+    savePracticeLinks(examples);
+    return examples;
+  });
+  const [practiceForm, setPracticeForm] = useState({ title: "", url: "", classNum: "1" });
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
     const adminToken = localStorage.getItem("adminToken") || localStorage.getItem("scholar_admin_token");
@@ -412,6 +438,27 @@ export default function QuizPage() {
     }
   };
 
+  // ============ PRACTICE SET HANDLERS ============
+  const addPracticeLink = () => {
+    if (!practiceForm.title.trim() || !practiceForm.url.trim()) { toast.error("Title and URL are required"); return; }
+    try { new URL(practiceForm.url); } catch { toast.error("Enter a valid URL"); return; }
+    const newLink: PracticeSetLink = { id: Date.now().toString(), title: practiceForm.title.trim(), url: practiceForm.url.trim(), classNum: parseInt(practiceForm.classNum) };
+    const updated = [...practiceLinks, newLink];
+    setPracticeLinks(updated);
+    savePracticeLinks(updated);
+    setPracticeForm({ title: "", url: "", classNum: practiceForm.classNum });
+    toast.success("Practice link added!");
+  };
+
+  const deletePracticeLink = (id: string) => {
+    const updated = practiceLinks.filter(l => l.id !== id);
+    setPracticeLinks(updated);
+    savePracticeLinks(updated);
+    toast.success("Link removed");
+  };
+
+  const getClassPracticeLinks = (classNum: number) => practiceLinks.filter(l => l.classNum === classNum);
+
   // ============ FILTERED DATA ============
   const filteredAdminQs = adminQs.filter((q) => {
     const cMatch = adminFilter === "all" || q.class === parseInt(adminFilter);
@@ -424,6 +471,38 @@ export default function QuizPage() {
     const sMatch = !studentSearch || s.name.toLowerCase().includes(studentSearch.toLowerCase()) || s.email.toLowerCase().includes(studentSearch.toLowerCase());
     return cMatch && sMatch;
   });
+
+  // ============ PRACTICE SET BOX (for students) ============
+  const PracticeSetBox = ({ classNum }: { classNum: number }) => {
+    const links = getClassPracticeLinks(classNum);
+    if (links.length === 0) return null;
+    return (
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            Practice Set
+          </CardTitle>
+          <CardDescription>Practice with these additional resources for Class {classNum}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3 rounded-lg border bg-background hover:bg-secondary/50 transition group"
+            >
+              <Link2 className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="flex-1 font-medium text-sm">{link.title}</span>
+              <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
+            </a>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // ============ SUB-COMPONENTS ============
   const ClassSelect = ({ value, onChange, label, disabled, showAll }: { value: string; onChange: (v: string) => void; label?: string; disabled?: boolean; showAll?: boolean }) => (
@@ -639,6 +718,7 @@ export default function QuizPage() {
           <Button variant="outline" onClick={prevQ} disabled={currentIdx === 0}>← Previous</Button>
           <Button onClick={nextQ} disabled={loading}>{currentIdx === questions.length - 1 ? (loading ? "Submitting..." : "Submit Quiz") : "Next →"}</Button>
         </div>
+        {user && <PracticeSetBox classNum={user.class} />}
         <Card className="bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800">
           <CardContent className="pt-4 text-center text-sm text-yellow-800 dark:text-yellow-300">⚠️ Cannot retake after submission</CardContent>
         </Card>
@@ -684,6 +764,7 @@ export default function QuizPage() {
             </CardContent>
           </Card>
         )}
+        {user && <PracticeSetBox classNum={user.class} />}
         <Card className="bg-muted/30">
           <CardContent className="pt-4 text-center">
             <p className="text-sm text-muted-foreground mb-3">⚠️ Cannot retake quiz for Class {user.class}</p>
@@ -713,8 +794,9 @@ export default function QuizPage() {
         </div>
 
         <Tabs defaultValue="questions" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="questions">Questions</TabsTrigger>
+            <TabsTrigger value="practice">Practice Sets</TabsTrigger>
             <TabsTrigger value="students" onClick={() => { if (studentsList.length === 0) loadAdminData(); }}>Students</TabsTrigger>
           </TabsList>
 
@@ -787,6 +869,62 @@ export default function QuizPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="practice" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" /> Add Practice Set Link</CardTitle>
+                <CardDescription>Add Google Form or external links for each class. Students will see these in their quiz view.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input value={practiceForm.title} onChange={(e) => setPracticeForm({ ...practiceForm, title: e.target.value })} placeholder="e.g. Math Practice Set 1" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Google Form / Link URL</Label>
+                    <Input value={practiceForm.url} onChange={(e) => setPracticeForm({ ...practiceForm, url: e.target.value })} placeholder="https://forms.google.com/..." />
+                  </div>
+                  <ClassSelect value={practiceForm.classNum} onChange={(v) => setPracticeForm({ ...practiceForm, classNum: v })} label="Class" />
+                  <Button onClick={addPracticeLink} className="h-10"><Plus className="w-4 h-4 mr-1" />Add Link</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {[1,2,3,4,5,6,7,8,9,10].map((c) => {
+              const classLinks = getClassPracticeLinks(c);
+              if (classLinks.length === 0) return null;
+              return (
+                <Card key={c}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Class {c} — {classLinks.length} link{classLinks.length > 1 ? "s" : ""}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {classLinks.map((link) => (
+                      <div key={link.id} className="flex items-center gap-3 p-3 rounded-lg border bg-secondary/20">
+                        <Link2 className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="flex-1 font-medium text-sm">{link.title}</span>
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-primary truncate max-w-[200px]">{link.url}</a>
+                        <Button variant="ghost" size="sm" className="text-destructive h-8 w-8 p-0" onClick={() => deletePracticeLink(link.id)}>
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {practiceLinks.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p>No practice set links added yet.</p>
+                  <p className="text-sm">Add Google Form links above for each class.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="students" className="space-y-4 mt-4">
