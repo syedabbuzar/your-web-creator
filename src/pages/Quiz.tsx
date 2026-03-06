@@ -461,6 +461,38 @@ export default function QuizPage() {
     return cMatch && sMatch;
   });
 
+  // ============ PRACTICE SET BOX (for students) ============
+  const PracticeSetBox = ({ classNum }: { classNum: number }) => {
+    const links = getClassPracticeLinks(classNum);
+    if (links.length === 0) return null;
+    return (
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            Practice Set
+          </CardTitle>
+          <CardDescription>Practice with these additional resources for Class {classNum}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3 rounded-lg border bg-background hover:bg-secondary/50 transition group"
+            >
+              <Link2 className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="flex-1 font-medium text-sm">{link.title}</span>
+              <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
+            </a>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
   // ============ SUB-COMPONENTS ============
   const ClassSelect = ({ value, onChange, label, disabled, showAll }: { value: string; onChange: (v: string) => void; label?: string; disabled?: boolean; showAll?: boolean }) => (
     <div className="space-y-2">
