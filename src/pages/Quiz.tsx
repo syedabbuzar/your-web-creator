@@ -427,6 +427,27 @@ export default function QuizPage() {
     }
   };
 
+  // ============ PRACTICE SET HANDLERS ============
+  const addPracticeLink = () => {
+    if (!practiceForm.title.trim() || !practiceForm.url.trim()) { toast.error("Title and URL are required"); return; }
+    try { new URL(practiceForm.url); } catch { toast.error("Enter a valid URL"); return; }
+    const newLink: PracticeSetLink = { id: Date.now().toString(), title: practiceForm.title.trim(), url: practiceForm.url.trim(), classNum: parseInt(practiceForm.classNum) };
+    const updated = [...practiceLinks, newLink];
+    setPracticeLinks(updated);
+    savePracticeLinks(updated);
+    setPracticeForm({ title: "", url: "", classNum: practiceForm.classNum });
+    toast.success("Practice link added!");
+  };
+
+  const deletePracticeLink = (id: string) => {
+    const updated = practiceLinks.filter(l => l.id !== id);
+    setPracticeLinks(updated);
+    savePracticeLinks(updated);
+    toast.success("Link removed");
+  };
+
+  const getClassPracticeLinks = (classNum: number) => practiceLinks.filter(l => l.classNum === classNum);
+
   // ============ FILTERED DATA ============
   const filteredAdminQs = adminQs.filter((q) => {
     const cMatch = adminFilter === "all" || q.class === parseInt(adminFilter);
