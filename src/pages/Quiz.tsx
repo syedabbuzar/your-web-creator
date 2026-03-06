@@ -709,6 +709,7 @@ export default function QuizPage() {
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="w-4 h-4 mr-1" />Logout</Button>
         </div>
+        {user && <PracticeSetBox classNum={user.class} />}
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground"><span>Progress</span><span>{progress}%</span></div>
           <Progress value={progress} className="h-2" />
@@ -718,7 +719,6 @@ export default function QuizPage() {
           <Button variant="outline" onClick={prevQ} disabled={currentIdx === 0}>← Previous</Button>
           <Button onClick={nextQ} disabled={loading}>{currentIdx === questions.length - 1 ? (loading ? "Submitting..." : "Submit Quiz") : "Next →"}</Button>
         </div>
-        {user && <PracticeSetBox classNum={user.class} />}
         <Card className="bg-yellow-50/50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-800">
           <CardContent className="pt-4 text-center text-sm text-yellow-800 dark:text-yellow-300">⚠️ Cannot retake after submission</CardContent>
         </Card>
