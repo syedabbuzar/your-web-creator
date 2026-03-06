@@ -783,8 +783,9 @@ export default function QuizPage() {
         </div>
 
         <Tabs defaultValue="questions" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="questions">Questions</TabsTrigger>
+            <TabsTrigger value="practice">Practice Sets</TabsTrigger>
             <TabsTrigger value="students" onClick={() => { if (studentsList.length === 0) loadAdminData(); }}>Students</TabsTrigger>
           </TabsList>
 
