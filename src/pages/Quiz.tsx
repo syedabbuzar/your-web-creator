@@ -151,7 +151,7 @@ export default function QuizPage() {
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [stats, setStats] = useState<Stats>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
-  const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "", address: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
   const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(() => {
@@ -222,7 +222,7 @@ export default function QuizPage() {
   // ============ AUTH HANDLERS ============
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim()) {
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim() || !form.address.trim()) {
       toast.error("All fields are required");
       return;
     }
@@ -243,10 +243,11 @@ export default function QuizPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
         class: selectedClass,
+        address: form.address.trim(),
       });
       toast.success("Registered! Please login.");
       setView("login");
-      setForm({ name: "", email: "", password: "", class: "", newClass: "" });
+      setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Registration failed");
     }
@@ -598,7 +599,7 @@ export default function QuizPage() {
         <p className="text-muted-foreground max-w-xl mx-auto">Practice quizzes for Class 1-10. Register, attempt, and track progress.</p>
       </div>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>
+        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" }); setView("register"); }}>
           <User className="w-4 h-4 mr-2" />Register
         </Button>
         <Button size="lg" variant="outline" onClick={() => { setForm({ ...form, password: "" }); setView("login"); }}>Login</Button>
@@ -650,6 +651,7 @@ export default function QuizPage() {
                 <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" required /></div>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
                 <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
+                <div className="space-y-2"><Label>Address</Label><Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Enter your full address" rows={2} required /></div>
                 <ClassSelect value={form.class} onChange={(v) => setForm({ ...form, class: v })} label="Your Class" />
               </>
             )}
@@ -673,7 +675,7 @@ export default function QuizPage() {
           <div className="mt-4 text-center space-y-2 text-sm">
             {view === "login" && (
               <>
-                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>Register</Button></p>
+                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" }); setView("register"); }}>Register</Button></p>
                 <p>Wrong class? <Button variant="link" className="p-0 h-auto" onClick={() => setView("change-class")}>Change here</Button></p>
               </>
             )}
