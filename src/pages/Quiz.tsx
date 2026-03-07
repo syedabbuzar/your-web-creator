@@ -151,7 +151,7 @@ export default function QuizPage() {
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [stats, setStats] = useState<Stats>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
-  const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "", address: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
   const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(() => {
@@ -222,7 +222,7 @@ export default function QuizPage() {
   // ============ AUTH HANDLERS ============
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim()) {
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim() || !form.address.trim()) {
       toast.error("All fields are required");
       return;
     }
@@ -243,10 +243,11 @@ export default function QuizPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
         class: selectedClass,
+        address: form.address.trim(),
       });
       toast.success("Registered! Please login.");
       setView("login");
-      setForm({ name: "", email: "", password: "", class: "", newClass: "" });
+      setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Registration failed");
     }
@@ -598,7 +599,7 @@ export default function QuizPage() {
         <p className="text-muted-foreground max-w-xl mx-auto">Practice quizzes for Class 1-10. Register, attempt, and track progress.</p>
       </div>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>
+        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" }); setView("register"); }}>
           <User className="w-4 h-4 mr-2" />Register
         </Button>
         <Button size="lg" variant="outline" onClick={() => { setForm({ ...form, password: "" }); setView("login"); }}>Login</Button>
@@ -650,6 +651,7 @@ export default function QuizPage() {
                 <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" required /></div>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
                 <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
+                <div className="space-y-2"><Label>Address</Label><Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Enter your full address" rows={2} required /></div>
                 <ClassSelect value={form.class} onChange={(v) => setForm({ ...form, class: v })} label="Your Class" />
               </>
             )}
@@ -673,7 +675,7 @@ export default function QuizPage() {
           <div className="mt-4 text-center space-y-2 text-sm">
             {view === "login" && (
               <>
-                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>Register</Button></p>
+                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" }); setView("register"); }}>Register</Button></p>
                 <p>Wrong class? <Button variant="link" className="p-0 h-auto" onClick={() => setView("change-class")}>Change here</Button></p>
               </>
             )}
@@ -748,7 +750,59 @@ export default function QuizPage() {
             <Badge variant={pct >= 70 ? "default" : "secondary"} className="text-lg py-1">{pct}%</Badge>
           </CardContent>
         </Card>
-        {wrong.length > 0 && (
+
+        {/* Full Question & Answer Review */}
+        {questions.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Question & Answer Review
+              </CardTitle>
+              <CardDescription>Review all questions with your answers and correct answers</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {questions.map((q, idx) => {
+                const userAnswer = answers[q._id];
+                const isCorrect = userAnswer === q.correctOptionId;
+                const userOptionText = q.options.find(o => o.id === userAnswer)?.text || "Not answered";
+                const correctOptionText = q.options.find(o => o.id === q.correctOptionId)?.text || "";
+                return (
+                  <div key={q._id} className={`p-4 rounded-lg border-2 ${isCorrect ? 'border-green-300 bg-green-50/50 dark:bg-green-950/20' : 'border-red-300 bg-red-50/50 dark:bg-red-950/20'}`}>
+                    <div className="flex items-start gap-3 mb-3">
+                      <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {idx + 1}
+                      </span>
+                      <p className="font-medium text-base">{q.question}</p>
+                      {isCorrect ? <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" /> : <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />}
+                    </div>
+                    <div className="pl-10 space-y-2">
+                      {q.options.map((opt) => {
+                        const isThisCorrect = opt.id === q.correctOptionId;
+                        const isThisSelected = opt.id === userAnswer;
+                        let optStyle = "border bg-background";
+                        if (isThisCorrect) optStyle = "border-2 border-green-400 bg-green-50 dark:bg-green-950/30";
+                        else if (isThisSelected && !isThisCorrect) optStyle = "border-2 border-red-400 bg-red-50 dark:bg-red-950/30";
+                        return (
+                          <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-lg ${optStyle}`}>
+                            <span className="font-semibold text-muted-foreground w-6">{opt.id.toUpperCase()}.</span>
+                            <span className="flex-1">{opt.text}</span>
+                            {isThisCorrect && <span className="text-green-600 text-sm font-medium">✓ Correct</span>}
+                            {isThisSelected && !isThisCorrect && <span className="text-red-600 text-sm font-medium">✗ Your answer</span>}
+                            {isThisSelected && isThisCorrect && <span className="text-green-600 text-sm font-medium">✓ Your answer</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fallback: show wrong answers from backend if questions not loaded */}
+        {questions.length === 0 && wrong.length > 0 && (
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><XCircle className="w-5 h-5" /> Mistakes ({wrong.length})</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -764,6 +818,7 @@ export default function QuizPage() {
             </CardContent>
           </Card>
         )}
+
         {user && <PracticeSetBox classNum={user.class} />}
         <Card className="bg-muted/30">
           <CardContent className="pt-4 text-center">
@@ -1007,13 +1062,19 @@ export default function QuizPage() {
                         {selectedStudent.wrongAnswers && selectedStudent.wrongAnswers.length > 0 && (
                           <div className="mt-4">
                             <h4 className="font-medium mb-2 flex items-center gap-1 text-red-600"><XCircle className="w-4 h-4" /> Wrong Answers ({selectedStudent.wrongAnswers.length})</h4>
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto">
                               {selectedStudent.wrongAnswers.map((wa, idx) => (
-                                <div key={idx} className="text-sm p-2 bg-destructive/5 rounded">
-                                  <p className="font-medium">{wa.questionText}</p>
-                                  <div className="grid grid-cols-2 gap-2 mt-1">
-                                    <span className="text-red-600">✗ {wa.selectedOption}</span>
-                                    <span className="text-green-600">✓ {wa.correctOption}</span>
+                                <div key={idx} className="p-3 bg-destructive/5 rounded-lg border border-destructive/20">
+                                  <p className="font-medium text-sm mb-2"><span className="text-muted-foreground">Q{idx + 1}:</span> {wa.questionText}</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                                    <div className="flex items-center gap-2 p-2 rounded bg-red-50 dark:bg-red-950/30 border border-red-200">
+                                      <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                      <span><span className="text-muted-foreground">Student:</span> <span className="text-red-600 font-medium">{wa.selectedOption}</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-950/30 border border-green-200">
+                                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                      <span><span className="text-muted-foreground">Correct:</span> <span className="text-green-600 font-medium">{wa.correctOption}</span></span>
+                                    </div>
                                   </div>
                                 </div>
                               ))}
