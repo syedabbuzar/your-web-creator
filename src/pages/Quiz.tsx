@@ -1062,13 +1062,19 @@ export default function QuizPage() {
                         {selectedStudent.wrongAnswers && selectedStudent.wrongAnswers.length > 0 && (
                           <div className="mt-4">
                             <h4 className="font-medium mb-2 flex items-center gap-1 text-red-600"><XCircle className="w-4 h-4" /> Wrong Answers ({selectedStudent.wrongAnswers.length})</h4>
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto">
                               {selectedStudent.wrongAnswers.map((wa, idx) => (
-                                <div key={idx} className="text-sm p-2 bg-destructive/5 rounded">
-                                  <p className="font-medium">{wa.questionText}</p>
-                                  <div className="grid grid-cols-2 gap-2 mt-1">
-                                    <span className="text-red-600">✗ {wa.selectedOption}</span>
-                                    <span className="text-green-600">✓ {wa.correctOption}</span>
+                                <div key={idx} className="p-3 bg-destructive/5 rounded-lg border border-destructive/20">
+                                  <p className="font-medium text-sm mb-2"><span className="text-muted-foreground">Q{idx + 1}:</span> {wa.questionText}</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                                    <div className="flex items-center gap-2 p-2 rounded bg-red-50 dark:bg-red-950/30 border border-red-200">
+                                      <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                      <span><span className="text-muted-foreground">Student:</span> <span className="text-red-600 font-medium">{wa.selectedOption}</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-950/30 border border-green-200">
+                                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                      <span><span className="text-muted-foreground">Correct:</span> <span className="text-green-600 font-medium">{wa.correctOption}</span></span>
+                                    </div>
                                   </div>
                                 </div>
                               ))}
