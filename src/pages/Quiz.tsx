@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BookOpen, LogOut, Settings, User, AlertCircle, CheckCircle, XCircle,
   RotateCcw, Edit, Trash, Plus, Search, Eye, EyeOff, Printer,
+  ExternalLink, Link2, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axios";
@@ -71,6 +72,19 @@ interface AdminQuestionFormData {
   options: string[];
   correctIdx: number;
 }
+
+interface PracticeSetLink {
+  id: string;
+  title: string;
+  url: string;
+  classNum: number;
+}
+
+const PRACTICE_LINKS_KEY = "scholar_practice_links";
+const getPracticeLinks = (): PracticeSetLink[] => {
+  try { return JSON.parse(localStorage.getItem(PRACTICE_LINKS_KEY) || "[]"); } catch { return []; }
+};
+const savePracticeLinks = (links: PracticeSetLink[]) => localStorage.setItem(PRACTICE_LINKS_KEY, JSON.stringify(links));
 
 // ============ PRINT HELPER ============
 const printStudentDetails = (student: StudentData, totalQuestions: number) => {
@@ -142,7 +156,19 @@ export default function QuizPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "", address: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
-
+  const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(() => {
+    const saved = getPracticeLinks();
+    if (saved.length > 0) return saved;
+    // Seed example links
+    const examples: PracticeSetLink[] = [
+      { id: "ex1", title: "Math Practice Set 1", url: "https://forms.gle/example1", classNum: 1 },
+      { id: "ex2", title: "English Practice Set", url: "https://forms.gle/example2", classNum: 1 },
+      { id: "ex3", title: "Science Practice Quiz", url: "https://forms.gle/example3", classNum: 9 },
+    ];
+    savePracticeLinks(examples);
+    return examples;
+  });
+  const [practiceForm, setPracticeForm] = useState({ title: "", url: "", classNum: "1" });
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
     const adminToken = localStorage.getItem("adminToken") || localStorage.getItem("scholar_admin_token");
@@ -198,7 +224,7 @@ export default function QuizPage() {
   // ============ AUTH HANDLERS ============
   const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim()) {
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.class.trim() || !form.address.trim()) {
       toast.error("All fields are required");
       return;
     }
@@ -415,6 +441,27 @@ export default function QuizPage() {
     }
   };
 
+  // ============ PRACTICE SET HANDLERS ============
+  const addPracticeLink = () => {
+    if (!practiceForm.title.trim() || !practiceForm.url.trim()) { toast.error("Title and URL are required"); return; }
+    try { new URL(practiceForm.url); } catch { toast.error("Enter a valid URL"); return; }
+    const newLink: PracticeSetLink = { id: Date.now().toString(), title: practiceForm.title.trim(), url: practiceForm.url.trim(), classNum: parseInt(practiceForm.classNum) };
+    const updated = [...practiceLinks, newLink];
+    setPracticeLinks(updated);
+    savePracticeLinks(updated);
+    setPracticeForm({ title: "", url: "", classNum: practiceForm.classNum });
+    toast.success("Practice link added!");
+  };
+
+  const deletePracticeLink = (id: string) => {
+    const updated = practiceLinks.filter(l => l.id !== id);
+    setPracticeLinks(updated);
+    savePracticeLinks(updated);
+    toast.success("Link removed");
+  };
+
+  const getClassPracticeLinks = (classNum: number) => practiceLinks.filter(l => l.classNum === classNum);
+
   // ============ FILTERED DATA ============
   const filteredAdminQs = adminQs.filter((q) => {
     const cMatch = adminFilter === "all" || q.class === parseInt(adminFilter);
@@ -427,6 +474,38 @@ export default function QuizPage() {
     const sMatch = !studentSearch || s.name.toLowerCase().includes(studentSearch.toLowerCase()) || s.email.toLowerCase().includes(studentSearch.toLowerCase());
     return cMatch && sMatch;
   });
+
+  // ============ PRACTICE SET BOX (for students) ============
+  const PracticeSetBox = ({ classNum }: { classNum: number }) => {
+    const links = getClassPracticeLinks(classNum);
+    if (links.length === 0) return null;
+    return (
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <FileText className="w-5 h-5 text-primary" />
+            Practice Set
+          </CardTitle>
+          <CardDescription>Practice with these additional resources for Class {classNum}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3 rounded-lg border bg-background hover:bg-secondary/50 transition group"
+            >
+              <Link2 className="w-4 h-4 text-primary flex-shrink-0" />
+              <span className="flex-1 font-medium text-sm">{link.title}</span>
+              <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-primary transition" />
+            </a>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // ============ SUB-COMPONENTS ============
   const ClassSelect = ({ value, onChange, label, disabled, showAll }: { value: string; onChange: (v: string) => void; label?: string; disabled?: boolean; showAll?: boolean }) => (
@@ -574,6 +653,7 @@ export default function QuizPage() {
                 <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your name" required /></div>
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
                 <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
+                <div className="space-y-2"><Label>Address</Label><Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Enter your full address" rows={2} required /></div>
                 <ClassSelect value={form.class} onChange={(v) => setForm({ ...form, class: v })} label="Your Class" />
                 <div className="space-y-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Your address" /></div>
               </>
@@ -634,6 +714,7 @@ export default function QuizPage() {
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}><LogOut className="w-4 h-4 mr-1" />Logout</Button>
         </div>
+        {user && <PracticeSetBox classNum={user.class} />}
         <div className="space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground"><span>Progress</span><span>{progress}%</span></div>
           <Progress value={progress} className="h-2" />
@@ -672,7 +753,59 @@ export default function QuizPage() {
             <Badge variant={pct >= 70 ? "default" : "secondary"} className="text-lg py-1">{pct}%</Badge>
           </CardContent>
         </Card>
-        {wrong.length > 0 && (
+
+        {/* Full Question & Answer Review */}
+        {questions.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Question & Answer Review
+              </CardTitle>
+              <CardDescription>Review all questions with your answers and correct answers</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {questions.map((q, idx) => {
+                const userAnswer = answers[q._id];
+                const isCorrect = userAnswer === q.correctOptionId;
+                const userOptionText = q.options.find(o => o.id === userAnswer)?.text || "Not answered";
+                const correctOptionText = q.options.find(o => o.id === q.correctOptionId)?.text || "";
+                return (
+                  <div key={q._id} className={`p-4 rounded-lg border-2 ${isCorrect ? 'border-green-300 bg-green-50/50 dark:bg-green-950/20' : 'border-red-300 bg-red-50/50 dark:bg-red-950/20'}`}>
+                    <div className="flex items-start gap-3 mb-3">
+                      <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {idx + 1}
+                      </span>
+                      <p className="font-medium text-base">{q.question}</p>
+                      {isCorrect ? <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" /> : <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />}
+                    </div>
+                    <div className="pl-10 space-y-2">
+                      {q.options.map((opt) => {
+                        const isThisCorrect = opt.id === q.correctOptionId;
+                        const isThisSelected = opt.id === userAnswer;
+                        let optStyle = "border bg-background";
+                        if (isThisCorrect) optStyle = "border-2 border-green-400 bg-green-50 dark:bg-green-950/30";
+                        else if (isThisSelected && !isThisCorrect) optStyle = "border-2 border-red-400 bg-red-50 dark:bg-red-950/30";
+                        return (
+                          <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-lg ${optStyle}`}>
+                            <span className="font-semibold text-muted-foreground w-6">{opt.id.toUpperCase()}.</span>
+                            <span className="flex-1">{opt.text}</span>
+                            {isThisCorrect && <span className="text-green-600 text-sm font-medium">✓ Correct</span>}
+                            {isThisSelected && !isThisCorrect && <span className="text-red-600 text-sm font-medium">✗ Your answer</span>}
+                            {isThisSelected && isThisCorrect && <span className="text-green-600 text-sm font-medium">✓ Your answer</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fallback: show wrong answers from backend if questions not loaded */}
+        {questions.length === 0 && wrong.length > 0 && (
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><XCircle className="w-5 h-5" /> Mistakes ({wrong.length})</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -688,6 +821,8 @@ export default function QuizPage() {
             </CardContent>
           </Card>
         )}
+
+        {user && <PracticeSetBox classNum={user.class} />}
         <Card className="bg-muted/30">
           <CardContent className="pt-4 text-center">
             <p className="text-sm text-muted-foreground mb-3">⚠️ Cannot retake quiz for Class {user.class}</p>
@@ -717,8 +852,9 @@ export default function QuizPage() {
         </div>
 
         <Tabs defaultValue="questions" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="questions">Questions</TabsTrigger>
+            <TabsTrigger value="practice">Practice Sets</TabsTrigger>
             <TabsTrigger value="students" onClick={() => { if (studentsList.length === 0) loadAdminData(); }}>Students</TabsTrigger>
           </TabsList>
 
@@ -791,6 +927,62 @@ export default function QuizPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="practice" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" /> Add Practice Set Link</CardTitle>
+                <CardDescription>Add Google Form or external links for each class. Students will see these in their quiz view.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input value={practiceForm.title} onChange={(e) => setPracticeForm({ ...practiceForm, title: e.target.value })} placeholder="e.g. Math Practice Set 1" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Google Form / Link URL</Label>
+                    <Input value={practiceForm.url} onChange={(e) => setPracticeForm({ ...practiceForm, url: e.target.value })} placeholder="https://forms.google.com/..." />
+                  </div>
+                  <ClassSelect value={practiceForm.classNum} onChange={(v) => setPracticeForm({ ...practiceForm, classNum: v })} label="Class" />
+                  <Button onClick={addPracticeLink} className="h-10"><Plus className="w-4 h-4 mr-1" />Add Link</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {[1,2,3,4,5,6,7,8,9,10].map((c) => {
+              const classLinks = getClassPracticeLinks(c);
+              if (classLinks.length === 0) return null;
+              return (
+                <Card key={c}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Class {c} — {classLinks.length} link{classLinks.length > 1 ? "s" : ""}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {classLinks.map((link) => (
+                      <div key={link.id} className="flex items-center gap-3 p-3 rounded-lg border bg-secondary/20">
+                        <Link2 className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="flex-1 font-medium text-sm">{link.title}</span>
+                        <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:text-primary truncate max-w-[200px]">{link.url}</a>
+                        <Button variant="ghost" size="sm" className="text-destructive h-8 w-8 p-0" onClick={() => deletePracticeLink(link.id)}>
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {practiceLinks.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  <FileText className="w-10 h-10 mx-auto mb-3 opacity-50" />
+                  <p>No practice set links added yet.</p>
+                  <p className="text-sm">Add Google Form links above for each class.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="students" className="space-y-4 mt-4">
@@ -916,17 +1108,20 @@ export default function QuizPage() {
                         </div>
                         {selectedStudent.wrongAnswers && selectedStudent.wrongAnswers.length > 0 && (
                           <div className="mt-4">
-                            <h4 className="font-medium mb-2 flex items-center gap-1 text-red-600">
-                              <XCircle className="w-4 h-4" /> Wrong Answers (
-                              {selectedStudent.wrongAnswers.length})
-                            </h4>
-                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                            <h4 className="font-medium mb-2 flex items-center gap-1 text-red-600"><XCircle className="w-4 h-4" /> Wrong Answers ({selectedStudent.wrongAnswers.length})</h4>
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto">
                               {selectedStudent.wrongAnswers.map((wa, idx) => (
-                                <div key={idx} className="text-sm p-2 bg-destructive/5 rounded">
-                                  <p className="font-medium">{wa.questionText}</p>
-                                  <div className="grid grid-cols-2 gap-2 mt-1">
-                                    <span className="text-red-600">✗ {wa.selectedOption}</span>
-                                    <span className="text-green-600">✓ {wa.correctOption}</span>
+                                <div key={idx} className="p-3 bg-destructive/5 rounded-lg border border-destructive/20">
+                                  <p className="font-medium text-sm mb-2"><span className="text-muted-foreground">Q{idx + 1}:</span> {wa.questionText}</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                                    <div className="flex items-center gap-2 p-2 rounded bg-red-50 dark:bg-red-950/30 border border-red-200">
+                                      <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                      <span><span className="text-muted-foreground">Student:</span> <span className="text-red-600 font-medium">{wa.selectedOption}</span></span>
+                                    </div>
+                                    <div className="flex items-center gap-2 p-2 rounded bg-green-50 dark:bg-green-950/30 border border-green-200">
+                                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                      <span><span className="text-muted-foreground">Correct:</span> <span className="text-green-600 font-medium">{wa.correctOption}</span></span>
+                                    </div>
                                   </div>
                                 </div>
                               ))}
