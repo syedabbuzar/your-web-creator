@@ -750,7 +750,59 @@ export default function QuizPage() {
             <Badge variant={pct >= 70 ? "default" : "secondary"} className="text-lg py-1">{pct}%</Badge>
           </CardContent>
         </Card>
-        {wrong.length > 0 && (
+
+        {/* Full Question & Answer Review */}
+        {questions.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Question & Answer Review
+              </CardTitle>
+              <CardDescription>Review all questions with your answers and correct answers</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {questions.map((q, idx) => {
+                const userAnswer = answers[q._id];
+                const isCorrect = userAnswer === q.correctOptionId;
+                const userOptionText = q.options.find(o => o.id === userAnswer)?.text || "Not answered";
+                const correctOptionText = q.options.find(o => o.id === q.correctOptionId)?.text || "";
+                return (
+                  <div key={q._id} className={`p-4 rounded-lg border-2 ${isCorrect ? 'border-green-300 bg-green-50/50 dark:bg-green-950/20' : 'border-red-300 bg-red-50/50 dark:bg-red-950/20'}`}>
+                    <div className="flex items-start gap-3 mb-3">
+                      <span className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {idx + 1}
+                      </span>
+                      <p className="font-medium text-base">{q.question}</p>
+                      {isCorrect ? <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" /> : <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />}
+                    </div>
+                    <div className="pl-10 space-y-2">
+                      {q.options.map((opt) => {
+                        const isThisCorrect = opt.id === q.correctOptionId;
+                        const isThisSelected = opt.id === userAnswer;
+                        let optStyle = "border bg-background";
+                        if (isThisCorrect) optStyle = "border-2 border-green-400 bg-green-50 dark:bg-green-950/30";
+                        else if (isThisSelected && !isThisCorrect) optStyle = "border-2 border-red-400 bg-red-50 dark:bg-red-950/30";
+                        return (
+                          <div key={opt.id} className={`flex items-center gap-3 p-3 rounded-lg ${optStyle}`}>
+                            <span className="font-semibold text-muted-foreground w-6">{opt.id.toUpperCase()}.</span>
+                            <span className="flex-1">{opt.text}</span>
+                            {isThisCorrect && <span className="text-green-600 text-sm font-medium">✓ Correct</span>}
+                            {isThisSelected && !isThisCorrect && <span className="text-red-600 text-sm font-medium">✗ Your answer</span>}
+                            {isThisSelected && isThisCorrect && <span className="text-green-600 text-sm font-medium">✓ Your answer</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fallback: show wrong answers from backend if questions not loaded */}
+        {questions.length === 0 && wrong.length > 0 && (
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-red-600"><XCircle className="w-5 h-5" /> Mistakes ({wrong.length})</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -766,6 +818,7 @@ export default function QuizPage() {
             </CardContent>
           </Card>
         )}
+
         {user && <PracticeSetBox classNum={user.class} />}
         <Card className="bg-muted/30">
           <CardContent className="pt-4 text-center">
