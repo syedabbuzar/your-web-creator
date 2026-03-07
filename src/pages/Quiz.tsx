@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import React, { useState, useEffect, FormEvent } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,7 @@ interface StudentData {
   name: string;
   email: string;
   class: number;
+  address?: string; // Added address field
   quizAttempted: boolean;
   quizScore?: number;
   wrongAnswers?: WrongAnswer[];
@@ -92,11 +93,12 @@ th{background:#edf2f7;font-weight:600}
 @media print{body{padding:15px}button{display:none!important}}
 </style></head><body>
 <h1>🎓 Scholar Educational Campus</h1>
-<h2 style="text-align:center;color:#4a5568">Student Quiz Report</h2> 
+<h2 style="text-align:center;color:#4a5568">Student Quiz Report</h2>
 <div class="info">
 <div><div class="label">Student Name</div><div class="value">${student.name}</div></div>
 <div><div class="label">Email</div><div class="value">${student.email}</div></div>
 <div><div class="label">Class</div><div class="value">Class ${student.class}</div></div>
+<div><div class="label">Address</div><div class="value">${student.address || "N/A"}</div></div>
 <div><div class="label">Registered</div><div class="value">${new Date(student.createdAt).toLocaleDateString('en-IN')}</div></div>
 </div>
 <div class="score-box">
@@ -137,7 +139,7 @@ export default function QuizPage() {
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [stats, setStats] = useState<Stats>({ totalStudents: 0, attemptedQuiz: 0, notAttempted: 0 });
-  const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", class: "", newClass: "", address: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({ auth: false, admin: false });
 
@@ -217,10 +219,11 @@ export default function QuizPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
         class: selectedClass,
+        address: form.address.trim(),
       });
       toast.success("Registered! Please login.");
       setView("login");
-      setForm({ name: "", email: "", password: "", class: "", newClass: "" });
+      setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" });
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Registration failed");
     }
@@ -433,20 +436,20 @@ export default function QuizPage() {
         <SelectTrigger><SelectValue placeholder="Select class (1-10)" /></SelectTrigger>
         <SelectContent>
           {showAll && <SelectItem value="all">All Classes</SelectItem>}
-          {[1,2,3,4,5,6,7,8,9,10].map((c) => <SelectItem key={c} value={String(c)}>Class {c}</SelectItem>)}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => <SelectItem key={c} value={String(c)}>Class {c}</SelectItem>)}
         </SelectContent>
       </Select>
     </div>
   );
 
-  const QuestionCard = ({ q, selected, onSelect, showResult, num }: { q: QuizQuestion; selected?: "a"|"b"|"c"; onSelect: (qid: string, opt: "a"|"b"|"c") => void; showResult?: boolean; num: number }) => (
+  const QuestionCard = ({ q, selected, onSelect, showResult, num }: { q: QuizQuestion; selected?: "a" | "b" | "c"; onSelect: (qid: string, opt: "a" | "b" | "c") => void; showResult?: boolean; num: number }) => (
     <Card className={showResult ? "border-2 border-primary/50" : ""}>
       <CardContent className="pt-6 space-y-4">
         <div className="flex items-start gap-3">
           <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center text-sm">{num}</span>
           <p className="font-medium text-lg">{q.question}</p>
         </div>
-        <RadioGroup value={selected} onValueChange={(v: string) => onSelect(q._id, v as "a"|"b"|"c")} className="space-y-2 pl-10" disabled={showResult}>
+        <RadioGroup value={selected} onValueChange={(v: string) => onSelect(q._id, v as "a" | "b" | "c")} className="space-y-2 pl-10" disabled={showResult}>
           {q.options.map((opt) => {
             const isCorrect = opt.id === q.correctOptionId;
             const isSelected = selected === opt.id;
@@ -519,7 +522,7 @@ export default function QuizPage() {
         <p className="text-muted-foreground max-w-xl mx-auto">Practice quizzes for Class 1-10. Register, attempt, and track progress.</p>
       </div>
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>
+        <Button size="lg" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" }); setView("register"); }}>
           <User className="w-4 h-4 mr-2" />Register
         </Button>
         <Button size="lg" variant="outline" onClick={() => { setForm({ ...form, password: "" }); setView("login"); }}>Login</Button>
@@ -572,6 +575,7 @@ export default function QuizPage() {
                 <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="student@example.com" required /></div>
                 <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
                 <ClassSelect value={form.class} onChange={(v) => setForm({ ...form, class: v })} label="Your Class" />
+                <div className="space-y-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Your address" /></div>
               </>
             )}
             {view === "login" && (
@@ -594,7 +598,7 @@ export default function QuizPage() {
           <div className="mt-4 text-center space-y-2 text-sm">
             {view === "login" && (
               <>
-                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "" }); setView("register"); }}>Register</Button></p>
+                <p>New? <Button variant="link" className="p-0 h-auto" onClick={() => { setForm({ name: "", email: "", password: "", class: "", newClass: "", address: "" }); setView("register"); }}>Register</Button></p>
                 <p>Wrong class? <Button variant="link" className="p-0 h-auto" onClick={() => setView("change-class")}>Change here</Button></p>
               </>
             )}
@@ -720,7 +724,7 @@ export default function QuizPage() {
 
           <TabsContent value="questions" className="space-y-4 mt-4">
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {[1,2,3,4,5,6,7,8,9,10].map((c) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
                 <Card key={c} className={adminFilter === String(c) ? "border-primary" : ""} onClick={() => setAdminFilter(adminFilter === String(c) ? "all" : String(c))}>
                   <CardContent className="pt-4 text-center cursor-pointer hover:bg-secondary/30 transition">
                     <div className="text-2xl font-bold">{questionCounts[c] || 0}</div>
@@ -743,7 +747,7 @@ export default function QuizPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader><DialogTitle>Add Question</DialogTitle></DialogHeader>
-                      <AdminQuestionForm initial={null} onSave={handleAdminSave} onCancel={() => {}} />
+                      <AdminQuestionForm initial={null} onSave={handleAdminSave} onCancel={() => { }} />
                     </DialogContent>
                   </Dialog>
                 </div>
@@ -839,19 +843,42 @@ export default function QuizPage() {
           <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2"><User className="w-5 h-5" /> Student Details</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" /> Student Details
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
-                  <div><Label className="text-muted-foreground">Name</Label><p className="font-medium">{selectedStudent.name}</p></div>
-                  <div><Label className="text-muted-foreground">Email</Label><p className="font-medium">{selectedStudent.email}</p></div>
-                  <div><Label className="text-muted-foreground">Class</Label><p className="font-medium">Class {selectedStudent.class}</p></div>
-                  <div><Label className="text-muted-foreground">Registered</Label><p className="font-medium">{new Date(selectedStudent.createdAt).toLocaleDateString()}</p></div>
+                  <div>
+                    <Label className="text-muted-foreground">Name</Label>
+                    <p className="font-medium">{selectedStudent.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Email</Label>
+                    <p className="font-medium">{selectedStudent.email}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Class</Label>
+                    <p className="font-medium">Class {selectedStudent.class}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">Registered</Label>
+                    <p className="font-medium">{new Date(selectedStudent.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  {/* New Address Field */}
+                  <div>
+                    <Label className="text-muted-foreground">Address</Label>
+                    <p className="font-medium">{selectedStudent.address || "N/A"}</p>
+                  </div>
                 </div>
                 <Card className={selectedStudent.quizAttempted ? "border-green-200" : "border-border"}>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
-                      {selectedStudent.quizAttempted ? <CheckCircle className="w-5 h-5 text-green-500" /> : <AlertCircle className="w-5 h-5 text-yellow-500" />}
+                      {selectedStudent.quizAttempted ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-yellow-500" />
+                      )}
                       Quiz Status
                     </CardTitle>
                   </CardHeader>
@@ -860,15 +887,39 @@ export default function QuizPage() {
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Score</span>
-                          <span className="text-2xl font-bold">{selectedStudent.quizScore}/{questions.length || 10}</span>
+                          <span className="text-2xl font-bold">
+                            {selectedStudent.quizScore}/{questions.length || 10}
+                          </span>
                         </div>
                         <div className="space-y-2">
-                          <div className="flex justify-between text-sm"><span>Percentage</span><span>{selectedStudent.quizScore ? Math.round((selectedStudent.quizScore / (questions.length || 10)) * 100) : 0}%</span></div>
-                          <Progress value={selectedStudent.quizScore ? Math.round((selectedStudent.quizScore / (questions.length || 10)) * 100) : 0} className="h-2" />
+                          <div className="flex justify-between text-sm">
+                            <span>Percentage</span>
+                            <span>
+                              {selectedStudent.quizScore
+                                ? Math.round(
+                                  (selectedStudent.quizScore / (questions.length || 10)) * 100
+                                )
+                                : 0}
+                              %
+                            </span>
+                          </div>
+                          <Progress
+                            value={
+                              selectedStudent.quizScore
+                                ? Math.round(
+                                  (selectedStudent.quizScore / (questions.length || 10)) * 100
+                                )
+                                : 0
+                            }
+                            className="h-2"
+                          />
                         </div>
                         {selectedStudent.wrongAnswers && selectedStudent.wrongAnswers.length > 0 && (
                           <div className="mt-4">
-                            <h4 className="font-medium mb-2 flex items-center gap-1 text-red-600"><XCircle className="w-4 h-4" /> Wrong Answers ({selectedStudent.wrongAnswers.length})</h4>
+                            <h4 className="font-medium mb-2 flex items-center gap-1 text-red-600">
+                              <XCircle className="w-4 h-4" /> Wrong Answers (
+                              {selectedStudent.wrongAnswers.length})
+                            </h4>
                             <div className="space-y-2 max-h-60 overflow-y-auto">
                               {selectedStudent.wrongAnswers.map((wa, idx) => (
                                 <div key={idx} className="text-sm p-2 bg-destructive/5 rounded">
@@ -889,8 +940,11 @@ export default function QuizPage() {
                   </CardContent>
                 </Card>
                 <div className="flex justify-end">
-                  <Button variant="outline" onClick={() => printStudentDetails(selectedStudent, questions.length || 10)}>
-                    <Printer className="w-4 h-4 mr-2" />Print Report
+                  <Button
+                    variant="outline"
+                    onClick={() => printStudentDetails(selectedStudent, questions.length || 10)}
+                  >
+                    <Printer className="w-4 h-4 mr-2" /> Print Report
                   </Button>
                 </div>
               </div>
