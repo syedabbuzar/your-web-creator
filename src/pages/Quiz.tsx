@@ -48,7 +48,7 @@ interface StudentData {
   name: string;
   email: string;
   class: number;
-  address?: string; // Added address field
+  address?: string;
   quizAttempted: boolean;
   quizScore?: number;
   wrongAnswers?: WrongAnswer[];
@@ -87,51 +87,97 @@ const getPracticeLinks = (): PracticeSetLink[] => {
 const savePracticeLinks = (links: PracticeSetLink[]) => localStorage.setItem(PRACTICE_LINKS_KEY, JSON.stringify(links));
 
 // ============ PRINT HELPER ============
-const printStudentDetails = (student: StudentData, totalQuestions: number) => {
+const printStudentDetails = (
+  student: StudentData,
+  totalQuestions: number,
+  questions: QuizQuestion[],
+  answers: Record<string, "a" | "b" | "c">
+) => {
   const pct = student.quizScore ? Math.round((student.quizScore / totalQuestions) * 100) : 0;
-  const html = `<!DOCTYPE html><html><head><title>Student Report - ${student.name}</title>
-<style>
-body{font-family:Arial,sans-serif;padding:30px;max-width:700px;margin:0 auto}
-h1{text-align:center;color:#1a365d;border-bottom:3px solid #1a365d;padding-bottom:10px}
-.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
-.info div{padding:8px;background:#f7fafc;border-radius:6px}
-.label{font-size:12px;color:#718096;text-transform:uppercase}
-.value{font-size:16px;font-weight:bold;color:#2d3748}
-.score-box{text-align:center;padding:20px;background:${pct >= 70 ? '#f0fff4' : pct >= 50 ? '#fffff0' : '#fff5f5'};border-radius:10px;margin:20px 0}
-.score-big{font-size:48px;font-weight:bold;color:${pct >= 70 ? '#38a169' : pct >= 50 ? '#d69e2e' : '#e53e3e'}}
-table{width:100%;border-collapse:collapse;margin-top:15px}
-th,td{padding:8px 12px;border:1px solid #e2e8f0;text-align:left;font-size:13px}
-th{background:#edf2f7;font-weight:600}
-.wrong{color:#e53e3e}.correct{color:#38a169}
-.footer{text-align:center;margin-top:30px;color:#a0aec0;font-size:11px}
-@media print{body{padding:15px}button{display:none!important}}
-</style></head><body>
-<h1>🎓 Scholar Educational Campus</h1>
-<h2 style="text-align:center;color:#4a5568">Student Quiz Report</h2>
-<div class="info">
-<div><div class="label">Student Name</div><div class="value">${student.name}</div></div>
-<div><div class="label">Email</div><div class="value">${student.email}</div></div>
-<div><div class="label">Class</div><div class="value">Class ${student.class}</div></div>
-<div><div class="label">Address</div><div class="value">${student.address || "N/A"}</div></div>
-<div><div class="label">Registered</div><div class="value">${new Date(student.createdAt).toLocaleDateString('en-IN')}</div></div>
-</div>
-<div class="score-box">
-<div class="score-big">${student.quizScore || 0}/${totalQuestions}</div>
-<div style="font-size:18px;margin-top:5px">${pct}% - ${pct >= 70 ? 'Excellent' : pct >= 50 ? 'Good' : 'Needs Improvement'}</div>
-<div style="font-size:13px;color:#718096;margin-top:5px">Status: ${student.quizAttempted ? 'Attempted' : 'Not Attempted'}</div>
-</div>
-${student.wrongAnswers && student.wrongAnswers.length > 0 ? `
-<h3>❌ Wrong Answers (${student.wrongAnswers.length})</h3>
-<table><thead><tr><th>#</th><th>Question</th><th>Your Answer</th><th>Correct Answer</th></tr></thead>
-<tbody>${student.wrongAnswers.map((w, i) => `<tr><td>${i + 1}</td><td>${w.questionText}</td><td class="wrong">${w.selectedOption}</td><td class="correct">${w.correctOption}</td></tr>`).join('')}</tbody></table>` : '<p style="text-align:center;color:#38a169;font-size:16px">✅ All answers correct!</p>'}
-<div class="footer">
-<p>Generated on ${new Date().toLocaleString('en-IN')}</p>
-<p>Scholar Educational Campus - VERITAS (Truth)</p>
-</div>
-<script>window.onload=function(){window.print()}</script>
-</body></html>`;
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Student Report - ${student.name}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; max-width: 700px; margin: 0 auto; }
+    h1 { text-align: center; color: #1a365d; border-bottom: 3px solid #1a365d; padding-bottom: 10px; }
+    .info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+    .info div { padding: 8px; background: #f7fafc; border-radius: 6px; }
+    .label { font-size: 12px; color: #718096; text-transform: uppercase; }
+    .value { font-size: 16px; font-weight: bold; color: #2d3748; }
+    .score-box { text-align: center; padding: 20px; background: ${pct >= 70 ? '#f0fff4' : pct >= 50 ? '#fffff0' : '#fff5f5'}; border-radius: 10px; margin: 20px 0; }
+    .score-big { font-size: 48px; font-weight: bold; color: ${pct >= 70 ? '#38a169' : pct >= 50 ? '#d69e2e' : '#e53e3e'}; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 8px 12px; border: 1px solid #e2e8f0; text-align: left; font-size: 13px; }
+    th { background: #edf2f7; font-weight: 600; }
+    .wrong { color: #e53e3e; }
+    .correct { color: #38a169; }
+    .footer { text-align: center; margin-top: 30px; color: #a0aec0; font-size: 11px; }
+    @media print { body { padding: 15px; } button { display: none !important; } }
+  </style>
+</head>
+<body>
+  <h1>🎓 Scholar Educational Campus</h1>
+  <h2 style="text-align: center; color: #4a5568;">Student Quiz Report</h2>
+
+  <div class="info">
+    <div><div class="label">Student Name</div><div class="value">${student.name}</div></div>
+    <div><div class="label">Email</div><div class="value">${student.email}</div></div>
+    <div><div class="label">Class</div><div class="value">Class ${student.class}</div></div>
+    <div><div class="label">Address</div><div class="value">${student.address || "N/A"}</div></div>
+    <div><div class="label">Registered</div><div class="value">${new Date(student.createdAt).toLocaleDateString('en-IN')}</div></div>
+  </div>
+
+  <div class="score-box">
+    <div class="score-big">${student.quizScore || 0}/${totalQuestions}</div>
+    <div style="font-size: 18px; margin-top: 5px;">${pct}% - ${pct >= 70 ? 'Excellent' : pct >= 50 ? 'Good' : 'Needs Improvement'}</div>
+    <div style="font-size: 13px; color: #718096; margin-top: 5px;">Status: ${student.quizAttempted ? 'Attempted' : 'Not Attempted'}</div>
+  </div>
+
+  <h3>📝 All Answers (${totalQuestions})</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Question</th>
+        <th>Your Answer</th>
+        <th>Correct Answer</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${questions.map((q, i) => {
+        const userAnswer = answers[q._id];
+        const correctAnswer = q.options.find(opt => opt.id === q.correctOptionId)?.text || "N/A";
+        const userAnswerText = q.options.find(opt => opt.id === userAnswer)?.text || "Not answered";
+        const isCorrect = userAnswer === q.correctOptionId;
+        return `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${q.question}</td>
+            <td class="${isCorrect ? 'correct' : 'wrong'}">${userAnswerText}</td>
+            <td class="correct">${correctAnswer}</td>
+            <td class="${isCorrect ? 'correct' : 'wrong'}">${isCorrect ? '✅ Correct' : '❌ Wrong'}</td>
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p>Generated on ${new Date().toLocaleString('en-IN')}</p>
+    <p>Scholar Educational Campus - VERITAS (Truth)</p>
+  </div>
+
+  <script>window.onload = function() { window.print(); }</script>
+</body>
+</html>`;
+
   const win = window.open('', '_blank');
-  if (win) { win.document.write(html); win.document.close(); }
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  }
 };
 
 // ============ MAIN COMPONENT ============
@@ -159,7 +205,6 @@ export default function QuizPage() {
   const [practiceLinks, setPracticeLinks] = useState<PracticeSetLink[]>(() => {
     const saved = getPracticeLinks();
     if (saved.length > 0) return saved;
-    // Seed example links
     const examples: PracticeSetLink[] = [
       { id: "ex1", title: "Math Practice Set 1", url: "https://forms.gle/example1", classNum: 1 },
       { id: "ex2", title: "English Practice Set", url: "https://forms.gle/example2", classNum: 1 },
@@ -169,6 +214,7 @@ export default function QuizPage() {
     return examples;
   });
   const [practiceForm, setPracticeForm] = useState({ title: "", url: "", classNum: "1" });
+
   useEffect(() => {
     const token = localStorage.getItem("scholar_quiz_token");
     const adminToken = localStorage.getItem("adminToken") || localStorage.getItem("scholar_admin_token");
@@ -655,7 +701,6 @@ export default function QuizPage() {
                 <div className="space-y-2"><Label>Password</Label><div className="relative"><Input type={showPassword.auth ? "text" : "password"} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="••••••" minLength={6} className="pr-10" required /><Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2" onClick={() => setShowPassword((p) => ({ ...p, auth: !p.auth }))}>{showPassword.auth ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></div></div>
                 <div className="space-y-2"><Label>Address</Label><Textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Enter your full address" rows={2} required /></div>
                 <ClassSelect value={form.class} onChange={(v) => setForm({ ...form, class: v })} label="Your Class" />
-                <div className="space-y-2"><Label>Address</Label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Your address" /></div>
               </>
             )}
             {view === "login" && (
@@ -829,7 +874,7 @@ export default function QuizPage() {
             <div className="flex flex-wrap justify-center gap-2">
               <Button variant="outline" onClick={() => setView("landing")}>Home</Button>
               <Button variant="secondary" onClick={() => setView("change-class")}><RotateCcw className="w-4 h-4 mr-1" />Change Class</Button>
-              <Button variant="outline" onClick={() => printStudentDetails(user, total)}>
+              <Button variant="outline" onClick={() => printStudentDetails(user, questions.length, questions, answers)}>
                 <Printer className="w-4 h-4 mr-1" />Print Result
               </Button>
             </div>
@@ -1014,7 +1059,7 @@ export default function QuizPage() {
                           <td className="py-3 text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(student)}><Eye className="w-4 h-4 mr-1" />View</Button>
-                              <Button variant="ghost" size="sm" onClick={() => printStudentDetails(student, 10)}><Printer className="w-4 h-4" /></Button>
+                              <Button variant="ghost" size="sm" onClick={() => printStudentDetails(student, questions.length, questions, {})}><Printer className="w-4 h-4" /></Button>
                             </div>
                           </td>
                         </tr>
@@ -1057,7 +1102,6 @@ export default function QuizPage() {
                     <Label className="text-muted-foreground">Registered</Label>
                     <p className="font-medium">{new Date(selectedStudent.createdAt).toLocaleDateString()}</p>
                   </div>
-                  {/* New Address Field */}
                   <div>
                     <Label className="text-muted-foreground">Address</Label>
                     <p className="font-medium">{selectedStudent.address || "N/A"}</p>
@@ -1137,7 +1181,7 @@ export default function QuizPage() {
                 <div className="flex justify-end">
                   <Button
                     variant="outline"
-                    onClick={() => printStudentDetails(selectedStudent, questions.length || 10)}
+                    onClick={() => printStudentDetails(selectedStudent, questions.length, questions, {})}
                   >
                     <Printer className="w-4 h-4 mr-2" /> Print Report
                   </Button>
