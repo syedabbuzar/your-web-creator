@@ -1,14 +1,21 @@
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+  "Access-Control-Allow-Origin": "*", // ya specific domain
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods":
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Credentials": "true", // ⭐ IMPORTANT
 };
 
 const BACKEND_BASE_URL = "https://scholar-backen.vercel.app/api";
 
 Deno.serve(async (req) => {
+  // ✅ FIX 1: Proper preflight response
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, {
+      status: 204, // ⭐ important
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -21,23 +28,22 @@ Deno.serve(async (req) => {
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
+        }
       );
     }
 
     const upstreamUrl = `${BACKEND_BASE_URL}${requestedPath}`;
     const method = req.method.toUpperCase();
+
     const headers = new Headers();
 
-    const authorization = req.headers.get("authorization");
-    if (authorization) headers.set("authorization", authorization);
+    // ✅ FIX 2: Forward all headers properly
+    req.headers.forEach((value, key) => {
+      headers.set(key, value);
+    });
 
-    const contentType = req.headers.get("content-type");
-    if (contentType) headers.set("content-type", contentType);
-
-    const body = ["GET", "HEAD"].includes(method)
-      ? undefined
-      : await req.text();
+    const body =
+      ["GET", "HEAD"].includes(method) ? undefined : await req.text();
 
     const upstreamResponse = await fetch(upstreamUrl, {
       method,
@@ -46,14 +52,14 @@ Deno.serve(async (req) => {
     });
 
     const responseText = await upstreamResponse.text();
-    const responseHeaders = new Headers(corsHeaders);
-    const upstreamContentType = upstreamResponse.headers.get("content-type");
 
-    if (upstreamContentType) {
-      responseHeaders.set("content-type", upstreamContentType);
-    } else {
-      responseHeaders.set("content-type", "application/json");
-    }
+    const responseHeaders = new Headers(corsHeaders);
+
+    // ✅ FIX 3: Preserve content-type
+    const upstreamContentType =
+      upstreamResponse.headers.get("content-type") || "application/json";
+
+    responseHeaders.set("Content-Type", upstreamContentType);
 
     return new Response(responseText, {
       status: upstreamResponse.status,
@@ -69,7 +75,7 @@ Deno.serve(async (req) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
+      }
     );
   }
 });
