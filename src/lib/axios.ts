@@ -19,10 +19,30 @@ const normalizePath = (url: string) => (url.startsWith("/") ? url : `/${url}`);
 
 const axiosInstance = axios.create({
   baseURL: API_PROXY_BASE,
+  timeout: 15000,
   headers: {
     "Content-Type": "application/json",
   },
 });
+
+// Auto-retry on network errors (DNS fail, timeout, etc.)
+axiosInstance.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const config = error.config;
+    if (
+      !config._retryCount &&
+      (!error.response || error.code === "ERR_NETWORK" || error.code === "ECONNABORTED")
+    ) {
+      config._retryCount = (config._retryCount || 0) + 1;
+      if (config._retryCount <= 2) {
+        await new Promise((r) => setTimeout(r, 1000 * config._retryCount));
+        return axiosInstance(config);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // URLs that should NOT send Authorization header (public endpoints)
 const PUBLIC_ENDPOINTS = [
